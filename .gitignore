@@ -1,0 +1,6 @@
+*.class
+core/src/tb/miner_tb/counts.txt
+*.qdb
+core/src/tb/miner_tb/work/_lib1_7.qpg
+*.qpg
+core/src/tb/miner_tb/work/_lib1_7.qtl

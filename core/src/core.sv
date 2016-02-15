@@ -227,12 +227,33 @@ module core #(
     };
     assign data_mem_addr = alu_result;
     
+    logic [2:0] inserted_stalls;
+    always_ff @ (posedge clk)
+    begin
+        if(inserted_stalls == 0 || inserted_stalls != 0)
+        begin
+            //this is the only way i know how to start the counter. otherwise its always XXXX
+        end
+        else
+        begin
+            inserted_stalls = 0;
+        end
+        if(stall_non_mem || (mem_stage_n != DMEM_IDLE) || (state_r != RUN))
+        begin
+            inserted_stalls = 0;
+        end
+        else
+        begin
+            inserted_stalls = (inserted_stalls + 1) % 5;
+        end
+    end
+
     // stall and memory stages signals
     // rf structural hazard and imem structural hazard (can't load next instruction)
     assign stall_non_mem = (net_reg_write_cmd && op_writes_rf_c)
                         || (net_imem_write_cmd);
     // Stall if LD/ST still active; or in non-RUN state
-    assign stall = stall_non_mem || (mem_stage_n != DMEM_IDLE) || (state_r != RUN);
+    assign stall = stall_non_mem || (mem_stage_n != DMEM_IDLE) || (state_r != RUN) ||  (inserted_stalls != 2'd4);
     
     // Launch LD/ST: must hold valid high until data memory acknowledges request.
     assign valid_to_mem_c = is_mem_op_c & (mem_stage_r != DMEM_REQ_ACKED);

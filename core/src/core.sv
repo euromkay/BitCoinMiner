@@ -225,7 +225,19 @@ module core #(
         byte_not_word : is_byte_op_c,
         yumi          : yumi_to_mem_c
     };
-    assign data_mem_addr = alu_result;
+
+    always_comb
+        begin
+            if(is_store_op_c)
+            begin
+                data_mem_addr = rd_val_or_zero;
+            end
+            else
+            begin
+                data_mem_addr = rs_val_or_zero;
+            end
+        end
+
     
     logic [2:0] inserted_stalls;
     always_ff @ (posedge clk)
@@ -238,7 +250,7 @@ module core #(
         begin
             inserted_stalls = 0;
         end
-        if(stall_non_mem || (mem_stage_n != DMEM_IDLE) || (state_r != RUN))
+        if(stall_non_mem || (mem_stage_n != DMEM_IDLE) || (state_r != RUN))//actually stalling
         begin
             inserted_stalls = 0;
         end

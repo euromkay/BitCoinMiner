@@ -4,3 +4,9 @@ core/src/tb/miner_tb/counts.txt
 core/src/tb/miner_tb/work/_lib1_7.qpg
 *.qpg
 core/src/tb/miner_tb/work/_lib1_7.qtl
+core/src/tb/core_tb/alu_trace.txt
+core/src/tb/core_tb/tester_info.txt
+*.wlf
+core/src/tb/core_tb/work/_info
+*.wlf
+core/src/tb/miner_tb/work/_info

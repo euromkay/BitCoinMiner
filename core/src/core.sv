@@ -62,6 +62,8 @@ module core #(
     // Final signals after network interfere
     logic imem_wen, rf_wen;
     
+    logic j_or_b_inst, stalled_enough;
+
     // Network operation signals
     logic net_ID_match,      net_PC_write_cmd,  net_imem_write_cmd,
         net_reg_write_cmd, net_bar_write_cmd, net_PC_write_cmd_IDLE;
@@ -91,7 +93,7 @@ module core #(
     assign debug_o = {PC_r, instruction, state_r, barrier_mask_r, barrier_r};
     
     // Update the PC if we get a PC write command from network, or the core is not stalled.
-    assign PC_wen = (net_PC_write_cmd_IDLE || !stall);
+    assign PC_wen = (net_PC_write_cmd_IDLE || !stall) && (!j_or_b_inst || stalled_enough);
     
     // Program counter
     always_ff @ (posedge clk)
@@ -168,6 +170,24 @@ module core #(
             .instruction_o(imem_out)
         );
     
+    always_comb
+    begin
+    unique casez (imem_out)
+        kBNEQZ, kBEQZ, kBLTZ, kBGTZ, kJALR:
+        begin
+            j_or_b_inst = 1;
+        end
+        default: 
+        begin 
+            j_or_b_inst = 0;
+        end
+    endcase
+    if (inserted_stalls == 2'd1)
+    begin
+        stalled_enough = 1;
+    end
+    end
+
     // Since imem has one cycle delay and we send next cycle's address, PC_n
     assign instruction = imem_out;
     
@@ -239,10 +259,10 @@ module core #(
         end
 
     
-    logic [2:0] inserted_stalls;
+    logic [1:0] inserted_stalls;
     always_ff @ (posedge clk)
     begin
-        if(inserted_stalls == 0 || inserted_stalls != 0)
+        if(j_or_b_inst)
         begin
             //this is the only way i know how to start the counter. otherwise its always XXXX
         end
@@ -250,13 +270,13 @@ module core #(
         begin
             inserted_stalls = 0;
         end
-        if(stall_non_mem || (mem_stage_n != DMEM_IDLE) || (state_r != RUN))//actually stalling
+        if(PC_wen)
         begin
             inserted_stalls = 0;
         end
         else
         begin
-            inserted_stalls = (inserted_stalls + 1) % 5;
+            inserted_stalls = inserted_stalls + 1;
         end
     end
 
@@ -265,7 +285,7 @@ module core #(
     assign stall_non_mem = (net_reg_write_cmd && op_writes_rf_c)
                         || (net_imem_write_cmd);
     // Stall if LD/ST still active; or in non-RUN state
-    assign stall = stall_non_mem || (mem_stage_n != DMEM_IDLE) || (state_r != RUN) ||  (inserted_stalls != 2'd4);
+    assign stall = stall_non_mem || (mem_stage_n != DMEM_IDLE) || (state_r != RUN);// ||  (inserted_stalls != 2'd4);
     
     // Launch LD/ST: must hold valid high until data memory acknowledges request.
     assign valid_to_mem_c = is_mem_op_c & (mem_stage_r != DMEM_REQ_ACKED);

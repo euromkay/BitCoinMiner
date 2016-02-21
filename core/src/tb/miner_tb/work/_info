@@ -7,7 +7,7 @@ z2
 !i10e 25
 !i10f 100
 cModel Technology
-Z0 dC:/Users/Michael/Documents/SchoolWorks/2015/CSE141L/Lab3/core/src/tb/miner_tb
+Z0 dC:/lab3/core/src/tb/miner_tb
 valu
 Z1 DXx6 sv_std 3 std 0 22 <EOTafDcUY:cQeO^ICn]m3
 Z2 DXx4 work 11 definitions 0 22 6abi10RnfQi>7d3IAJdKG1
@@ -22,12 +22,12 @@ IiV_@1OMbHg0068iac:7^42
 !s105 alu_sv_unit
 S1
 R0
-Z4 w1454728066
+Z4 w1455578674
 Z5 8../../alu.sv
 Z6 F../../alu.sv
 L0 4
 Z7 OV;L;10.3d;59
-Z8 !s108 1455586094.524000
+Z8 !s108 1455997752.580000
 Z9 !s107 ../../alu.sv|
 Z10 !s90 -reportprogress|300|-work|work|../../alu.sv|
 !i113 1
@@ -69,14 +69,14 @@ I93CjVLfafzVI2K_oLKV<>0
 !s105 cl_decode_sv_unit
 S1
 R0
-Z12 w1454728082
-Z13 8../../cl_decode.sv
-Z14 F../../cl_decode.sv
+R4
+Z12 8../../cl_decode.sv
+Z13 F../../cl_decode.sv
 L0 4
 R7
-Z15 !s108 1455586094.617000
-Z16 !s107 ../../cl_decode.sv|
-Z17 !s90 -reportprogress|300|-work|work|../../cl_decode.sv|
+Z14 !s108 1455997752.658000
+Z15 !s107 ../../cl_decode.sv|
+Z16 !s90 -reportprogress|300|-work|work|../../cl_decode.sv|
 !i113 1
 R11
 Xcl_decode_sv_unit
@@ -92,14 +92,14 @@ IhgaUC5UVEWT^nPb3=?ezk0
 !i103 1
 S1
 R0
+R4
 R12
 R13
-R14
 L0 1
 R7
+R14
 R15
 R16
-R17
 !i113 1
 R11
 vcl_state_machine
@@ -116,14 +116,14 @@ I=LR9ZgVBHzElb7dRZHA6z2
 !s105 cl_state_machine_sv_unit
 S1
 R0
-Z18 w1454366100
-Z19 8../../cl_state_machine.sv
-Z20 F../../cl_state_machine.sv
+R4
+Z17 8../../cl_state_machine.sv
+Z18 F../../cl_state_machine.sv
 L0 3
 R7
-Z21 !s108 1455586094.696000
-Z22 !s107 ../../cl_state_machine.sv|
-Z23 !s90 -reportprogress|300|-work|work|../../cl_state_machine.sv|
+Z19 !s108 1455997752.752000
+Z20 !s107 ../../cl_state_machine.sv|
+Z21 !s90 -reportprogress|300|-work|work|../../cl_state_machine.sv|
 !i113 1
 R11
 Xcl_state_machine_sv_unit
@@ -139,14 +139,14 @@ I@W@1W8ZB9T@aU:VD8:1fe3
 !i103 1
 S1
 R0
+R4
+R17
 R18
-R19
-R20
 L0 1
 R7
+R19
+R20
 R21
-R22
-R23
 !i113 1
 R11
 vcore
@@ -158,19 +158,19 @@ r1
 !s85 0
 31
 !i10b 1
-!s100 [LWRI=lLekZOC^R4ohE;`1
-IjJENKE`2o6j]bRZ0VIWO:2
+!s100 e6OQTom8Xk@NhhaM9m9Gg3
+I9ndbdH[l?1ij674?l2@NX0
 !s105 core_sv_unit
 S1
 R0
-Z24 w1455586089
-Z25 8../../core.sv
-Z26 F../../core.sv
-Z27 L0 12
+Z22 w1455997603
+Z23 8../../core.sv
+Z24 F../../core.sv
+Z25 L0 12
 R7
-Z28 !s108 1455586094.774000
-Z29 !s107 ../../core.sv|
-Z30 !s90 -reportprogress|300|-work|work|../../core.sv|
+Z26 !s108 1455997752.830000
+Z27 !s107 ../../core.sv|
+Z28 !s90 -reportprogress|300|-work|work|../../core.sv|
 !i113 1
 R11
 vcore_flattened
@@ -187,14 +187,14 @@ IT>>JKc:cz17gK9U:Q[0V_0
 !s105 core_flattened_sv_unit
 S1
 R0
-R18
-Z31 8../../core_flattened.sv
-Z32 F../../core_flattened.sv
+R4
+Z29 8../../core_flattened.sv
+Z30 F../../core_flattened.sv
 L0 4
 R7
-Z33 !s108 1455586095.071000
-Z34 !s107 ../../core_flattened.sv|
-Z35 !s90 -reportprogress|300|-work|work|../../core_flattened.sv|
+Z31 !s108 1455997752.923000
+Z32 !s107 ../../core_flattened.sv|
+Z33 !s90 -reportprogress|300|-work|work|../../core_flattened.sv|
 !i113 1
 R11
 Xcore_flattened_sv_unit
@@ -210,14 +210,14 @@ I4Z^19N4Df?Kk@6:Ph<U8M3
 !i103 1
 S1
 R0
-R18
-R31
-R32
+R4
+R29
+R30
 L0 1
 R7
+R31
+R32
 R33
-R34
-R35
 !i113 1
 R11
 Xcore_sv_unit
@@ -233,14 +233,14 @@ IdC0f0bbSC5Hj@[cEb^R9Y0
 !i103 1
 S1
 R0
+R22
+R23
 R24
-R25
-R26
 L0 1
 R7
+R26
+R27
 R28
-R29
-R30
 !i113 1
 R11
 vdata_mem
@@ -257,14 +257,14 @@ IXhz5^KUE3[Xef9@@8dPCb2
 !s105 data_mem_sv_unit
 S1
 R0
-R18
-Z36 8../../data_mem.sv
-Z37 F../../data_mem.sv
-R27
+R4
+Z34 8../../data_mem.sv
+Z35 F../../data_mem.sv
+R25
 R7
-Z38 !s108 1455586095.289000
-Z39 !s107 ../../data_mem.sv|
-Z40 !s90 -reportprogress|300|-work|work|../../data_mem.sv|
+Z36 !s108 1455997753.017000
+Z37 !s107 ../../data_mem.sv|
+Z38 !s90 -reportprogress|300|-work|work|../../data_mem.sv|
 !i113 1
 R11
 Xdata_mem_sv_unit
@@ -280,26 +280,26 @@ I7lNb^_?QlGAKdH5dk?R0h3
 !i103 1
 S1
 R0
-R18
-R36
-R37
+R4
+R34
+R35
 L0 1
 R7
+R36
+R37
 R38
-R39
-R40
 !i113 1
 R11
 Xdefinitions
 R1
-!s110 1455586094
+!s110 1455997752
 !i10b 1
 !s100 BHdU`D9WcX3KB2XT2b?Si0
 I6abi10RnfQi>7d3IAJdKG1
 V6abi10RnfQi>7d3IAJdKG1
 S1
 R0
-w1455566646
+R4
 8../../definitions.sv
 F../../definitions.sv
 L0 2
@@ -307,7 +307,7 @@ R7
 r1
 !s85 0
 31
-!s108 1455586094.258000
+!s108 1455997752.487000
 !s107 ../../definitions.sv|
 !s90 -reportprogress|300|-work|work|../../definitions.sv|
 !i113 1
@@ -326,14 +326,14 @@ I_L?1L=^T]>XbPnga>>O;31
 !s105 instr_mem_sv_unit
 S1
 R0
-Z41 w1455482929
-Z42 8../../instr_mem.sv
-Z43 F../../instr_mem.sv
+R4
+Z39 8../../instr_mem.sv
+Z40 F../../instr_mem.sv
 L0 4
 R7
-Z44 !s108 1455586095.618000
-Z45 !s107 ../../instr_mem.sv|
-Z46 !s90 -reportprogress|300|-work|work|../../instr_mem.sv|
+Z41 !s108 1455997753.173000
+Z42 !s107 ../../instr_mem.sv|
+Z43 !s90 -reportprogress|300|-work|work|../../instr_mem.sv|
 !i113 1
 R11
 Xinstr_mem_sv_unit
@@ -349,14 +349,14 @@ IZ2k6>iYAVP4D0giY`B_Q62
 !i103 1
 S1
 R0
+R4
+R39
+R40
+L0 1
+R7
 R41
 R42
 R43
-L0 1
-R7
-R44
-R45
-R46
 !i113 1
 R11
 vminer_tb
@@ -373,14 +373,14 @@ IYF[kC<kF220IC]X[iMN090
 !s105 miner_tb_sv_unit
 S1
 R0
-Z47 w1454730436
-Z48 8miner_tb.sv
-Z49 Fminer_tb.sv
+R4
+Z44 8miner_tb.sv
+Z45 Fminer_tb.sv
 L0 18
 R7
-Z50 !s108 1455586096.164000
-Z51 !s107 miner_tb.sv|
-Z52 !s90 -reportprogress|300|-work|work|miner_tb.sv|
+Z46 !s108 1455997753.438000
+Z47 !s107 miner_tb.sv|
+Z48 !s90 -reportprogress|300|-work|work|miner_tb.sv|
 !i113 1
 R11
 Xminer_tb_sv_unit
@@ -396,14 +396,14 @@ I]W5Zj5L>9QW>KXdo`Z0P32
 !i103 1
 S1
 R0
-R47
-R48
-R49
+R4
+R44
+R45
 L0 2
 R7
-R50
-R51
-R52
+R46
+R47
+R48
 !i113 1
 R11
 Xnet_packet_logger_s_sv_unit
@@ -419,14 +419,14 @@ I?A>kiA^C2L18PeV0b06^c1
 !i103 1
 S1
 R0
-R18
-Z53 8../../net_packet_logger_s.sv
-Z54 F../../net_packet_logger_s.sv
+R4
+Z49 8../../net_packet_logger_s.sv
+Z50 F../../net_packet_logger_s.sv
 L0 6
 R7
-Z55 !s108 1455586095.805000
-Z56 !s107 ../../net_packet_logger_s.sv|
-Z57 !s90 -reportprogress|300|-work|work|../../net_packet_logger_s.sv|
+Z51 !s108 1455997753.251000
+Z52 !s107 ../../net_packet_logger_s.sv|
+Z53 !s90 -reportprogress|300|-work|work|../../net_packet_logger_s.sv|
 !i113 1
 R11
 vnetwork_packet_s_logger
@@ -443,19 +443,19 @@ I1`[I5o1G[mFK]:@K^X>e90
 !s105 net_packet_logger_s_sv_unit
 S1
 R0
-R18
-R53
-R54
+R4
+R49
+R50
 L0 8
 R7
-R55
-R56
-R57
+R51
+R52
+R53
 !i113 1
 R11
 vreg_file
 R1
-!s110 1455586095
+!s110 1455997753
 !i10b 1
 !s100 IlHO@G4m<K>[A<D@ChHUP3
 I4Ka1boJgS7]niRAelLF;I1
@@ -463,7 +463,7 @@ R3
 !s105 reg_file_sv_unit
 S1
 R0
-R18
+R4
 8../../reg_file.sv
 F../../reg_file.sv
 L0 2
@@ -471,7 +471,7 @@ R7
 r1
 !s85 0
 31
-!s108 1455586095.961000
+!s108 1455997753.345000
 !s107 ../../reg_file.sv|
 !s90 -reportprogress|300|-work|work|../../reg_file.sv|
 !i113 1

@@ -163,6 +163,10 @@ package definitions;
         logic [mask_length_gp-1:0] barrier_mask_r_f;
         logic [mask_length_gp-1:0] barrier_r_f;
     } debug_s;
+	 
+	 typedef struct packed {
+		  instruction_s instruction;
+	 } pipecut ;
     
     //`endif
 endpackage // defintions

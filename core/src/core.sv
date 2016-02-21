@@ -36,7 +36,7 @@ module core #(
                                 imm_jump_add;
                                 
     // Ins. memory output
-    instruction_s instruction, imem_out;
+    instruction_s instruction, imem_out, instruction_r;
     
     // Result of ALU, Register file outputs, Data memory output data
     logic [31:0] alu_result, rs_val_or_zero, rd_val_or_zero, rs_val, rd_val;
@@ -54,13 +54,17 @@ module core #(
     // controller output signals
     logic is_load_op_c,  op_writes_rf_c, valid_to_mem_c,
         is_store_op_c, is_mem_op_c,    PC_wen,
-        is_byte_op_c;
+        is_byte_op_c, PC_wen_r;
     
     // Handshak protocol signals for memory
     logic yumi_to_mem_c;
     
     // Final signals after network interfere
     logic imem_wen, rf_wen;
+	 
+	 logic nop_r, nop_n;
+	 
+	 logic [15:0] nop = 16'b1111111111111111; 
     
     // Network operation signals
     logic net_ID_match,      net_PC_write_cmd,  net_imem_write_cmd,
@@ -91,7 +95,8 @@ module core #(
     assign debug_o = {PC_r, instruction, state_r, barrier_mask_r, barrier_r};
     
     // Update the PC if we get a PC write command from network, or the core is not stalled.
-    assign PC_wen = (net_PC_write_cmd_IDLE || !stall);
+	 // MA: Also check if we have a nop on next instruction
+    assign PC_wen = (net_PC_write_cmd_IDLE || (!nop_n && !stall));
     
     // Program counter
     always_ff @ (posedge clk)
@@ -111,7 +116,7 @@ module core #(
     
     // Determine next PC
     assign pc_plus1     = PC_r + 1'b1;  // Increment PC.
-    assign imm_jump_add = $signed(instruction.rs_imm) + $signed(PC_r);  // Calculate possible branch address.
+    assign imm_jump_add = $signed(fd_r.instruction.rs_imm) + $signed(PC_r);  // Calculate possible branch address.
     
     // Next PC is based on network or the instruction
     always_comb
@@ -130,7 +135,7 @@ module core #(
             end
         else
             begin
-            unique casez (instruction)
+            unique casez (fd_r.instruction)
                 // On a JALR, jump to the address in RS (passed via alu_result).
                 kJALR:
                     begin
@@ -167,13 +172,53 @@ module core #(
             .wen_i(imem_wen),
             .instruction_o(imem_out)
         );
-    
+	 
     // Since imem has one cycle delay and we send next cycle's address, PC_n
-    assign instruction = imem_out;
+    //assign instruction = imem_out;
+	 assign instruction = (PC_wen_r) ? imem_out : nop_r ? nop : stall ? instruction_r : instruction;
+	 
+	 pipecut fd_r, fd_n;
+	 assign fd_n.instruction = (stall) ? fd_r.instruction : instruction;
+	 
+	 always_ff @ (posedge clk)
+	 begin
+		nop_r = nop_n;
+		fd_r <= fd_n;
+		
+		if (!n_reset)
+            begin
+            PC_wen_r     	<= 0;
+				instruction_r	<= 0;
+            end
+		else if (PC_wen)
+			begin
+				PC_wen_r       <= PC_wen;
+				instruction_r  <= instruction;
+			end
+	 end
+	 
+	 always_comb begin
+		unique casez (instruction)
+			kBNEQZ, kBEQZ, kBLTZ, kBGTZ, kJALR:
+			  nop_n = 1;
+		default: 
+		begin 
+			nop_n = 0;
+		end
+		endcase
+		
+		unique casez (fd_r.instruction)
+			kBNEQZ, kBEQZ, kBLTZ, kBGTZ, kJALR:
+			  nop_n = 0;
+		default: 
+		begin 
+		end
+		endcase
+	 end
     
     // Decode module
     cl_decode decode (
-        .instruction_i(instruction),
+        .instruction_i(fd_r.instruction),
         .is_load_op_o(is_load_op_c),
         .op_writes_rf_o(op_writes_rf_c),
         .is_store_op_o(is_store_op_c),
@@ -188,7 +233,7 @@ module core #(
     assign rd_addr = (net_reg_write_cmd)
                     ? (net_packet_i.net_addr [0+:($bits(instruction.rs_imm))])
                     : ({{($bits(instruction.rs_imm)-$bits(instruction.rd)){1'b0}}
-                        ,{instruction.rd}});
+                        ,{fd_r.instruction.rd}});
     
     // Register file
     reg_file #(
@@ -196,7 +241,7 @@ module core #(
         )
         rf (
             .clk(clk),
-            .rs_addr_i(instruction.rs_imm),
+            .rs_addr_i(fd_r.instruction.rs_imm),
             .rd_addr_i(rd_addr),
             .w_addr_i(rd_addr),
             .wen_i(rf_wen),
@@ -205,14 +250,14 @@ module core #(
             .rd_val_o(rd_val)
         );
     
-    assign rs_val_or_zero = instruction.rs_imm ? rs_val : 32'b0;
-    assign rd_val_or_zero = rd_addr            ? rd_val : 32'b0;
+    assign rs_val_or_zero = fd_r.instruction.rs_imm ? rs_val : 32'b0;
+    assign rd_val_or_zero = rd_addr ? rd_val : 32'b0;
     
     // ALU
     alu alu_1 (
             .rd_i(rd_val_or_zero),
             .rs_i(rs_val_or_zero),
-            .op_i(instruction),
+            .op_i(fd_r.instruction),
             .result_o(alu_result),
             .jump_now_o(jump_now)
         );
@@ -265,7 +310,7 @@ module core #(
     assign stall_non_mem = (net_reg_write_cmd && op_writes_rf_c)
                         || (net_imem_write_cmd);
     // Stall if LD/ST still active; or in non-RUN state
-    assign stall = stall_non_mem || (mem_stage_n != DMEM_IDLE) || (state_r != RUN) ||  (inserted_stalls != 2'd4);
+    assign stall = stall_non_mem || (mem_stage_n != DMEM_IDLE) || (state_r != RUN);// ||  (inserted_stalls != 2'd4);
     
     // Launch LD/ST: must hold valid high until data memory acknowledges request.
     assign valid_to_mem_c = is_mem_op_c & (mem_stage_r != DMEM_REQ_ACKED);
@@ -395,7 +440,7 @@ module core #(
     // or by an an BAR instruction that is committing
     assign barrier_n = net_PC_write_cmd_IDLE
                     ? net_packet_i.net_data[0+:mask_length_gp]
-                    : ((instruction ==? kBAR) & ~stall)
+                    : ((fd_r.instruction ==? kBAR) & ~stall)
                         ? alu_result [0+:mask_length_gp]
                         : barrier_r;
     

@@ -64,8 +64,6 @@ module core #(
     // Final signals after network interfere
     logic imem_wen, rf_wen;
 
-    logic j_or_b_inst, stalled_enough;
-
     // Network operation signals
     logic net_ID_match,      net_PC_write_cmd,  net_imem_write_cmd,
         net_reg_write_cmd, net_bar_write_cmd, net_PC_write_cmd_IDLE;
@@ -95,7 +93,7 @@ module core #(
     assign debug_o = {PC_r, instruction_if_r, state_r, barrier_mask_r, barrier_r};
 
     // Update the PC if we get a PC write command from network, or the core is not stalled.
-    assign PC_wen = (net_PC_write_cmd_IDLE || !stall); // && (!j_or_b_inst || stalled_enough);
+    assign PC_wen = (net_PC_write_cmd_IDLE || !stall);
 
     // Program counter
     always_ff @ (posedge clk)
@@ -116,8 +114,7 @@ module core #(
     // Determine next PC
     assign pc_plus1     = PC_r + 1'b1;  // Increment PC.
     assign imm_jump_add = $signed(instruction_if_r.rs_imm) + $signed(pc_plus1_if - 1);  // Calculate possible branch address.
-    //assign imm_jump_add = $signed(instruction_if_r.rs_imm) + $signed(pc_plus1_if);
-
+	 
     // Next PC is based on network or the instruction
     always_comb
         begin
@@ -181,7 +178,8 @@ module core #(
     begin
         if (!stall)
         begin
-            if (jump_now || (instruction_if_r ==? kJALR))
+            if (jump_now || (instruction_if_r ==? kJALR) || (instruction_if_r ==? kWAIT))
+            //if (jump_now || (instruction_if_r ==? kJALR))
             begin
                 instruction_if_r <= 0;
             end

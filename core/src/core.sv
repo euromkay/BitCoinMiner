@@ -35,16 +35,16 @@ module core #(
                                 pc_plus1, imem_addr,
                                 imm_jump_add;
 
-    logic [imem_addr_width_p-1:0] pc_plus1_if;
+    logic [imem_addr_width_p-1:0] pc_1_r;
 
     // Ins. memory output
-    instruction_s instruction_if_r, imem_out;
+    instruction_s instruction_1_r, imem_out;
 
     // Result of ALU, Register file outputs, Data memory output data
     logic [31:0] alu_result, rs_val_or_zero, rd_val_or_zero, rs_val, rd_val;
 
     // Reg. File address
-    logic [($bits(instruction_if_r.rs_imm))-1:0] rd_addr;
+    logic [($bits(instruction_1_r.rs_imm))-1:0] rd_addr;
 
     // Data for Reg. File signals
     logic [31:0] rf_wd;
@@ -90,7 +90,7 @@ module core #(
     assign net_packet_o = net_packet_i;
 
     // DEBUG Struct
-    assign debug_o = {PC_r, instruction_if_r, state_r, barrier_mask_r, barrier_r};
+    assign debug_o = {PC_r, instruction_1_r, state_r, barrier_mask_r, barrier_r};
 
     // Update the PC if we get a PC write command from network, or the core is not stalled.
     assign PC_wen = (net_PC_write_cmd_IDLE || !stall);
@@ -113,8 +113,8 @@ module core #(
 
     // Determine next PC
     assign pc_plus1     = PC_r + 1'b1;  // Increment PC.
-    assign imm_jump_add = $signed(instruction_if_r.rs_imm) + $signed(pc_plus1_if - 1);  // Calculate possible branch address.
-	 
+    assign imm_jump_add = $signed(instruction_1_r.rs_imm) + $signed(pc_1_r);  // Calculate possible branch address.
+
     // Next PC is based on network or the instruction
     always_comb
         begin
@@ -132,7 +132,7 @@ module core #(
             end
         else
             begin
-            unique casez (instruction_if_r)
+            unique casez (instruction_1_r)
                 // On a JALR, jump to the address in RS (passed via alu_result).
                 kJALR:
                     begin
@@ -178,22 +178,21 @@ module core #(
     begin
         if (!stall)
         begin
-            if (jump_now || (instruction_if_r ==? kJALR) || (instruction_if_r ==? kWAIT))
-            //if (jump_now || (instruction_if_r ==? kJALR))
+            if (jump_now || (instruction_1_r ==? kJALR) || (instruction_1_r ==? kWAIT))
             begin
-                instruction_if_r <= 0;
+                instruction_1_r <= 0;
             end
             else
             begin
-                instruction_if_r <= imem_out;
-                pc_plus1_if <= pc_plus1;
+                instruction_1_r <= imem_out;
+                pc_1_r <= PC_r;
             end
         end
     end
 
     // Decode module
     cl_decode decode (
-        .instruction_i(instruction_if_r),
+        .instruction_i(instruction_1_r),
         .is_load_op_o(is_load_op_c),
         .op_writes_rf_o(op_writes_rf_c),
         .is_store_op_o(is_store_op_c),
@@ -206,17 +205,17 @@ module core #(
     // Since network can write into immediate registers, the address is wider
     // but for the destination register in an instruction the extra bits must be zero
     assign rd_addr = (net_reg_write_cmd)
-                    ? (net_packet_i.net_addr [0+:($bits(instruction_if_r.rs_imm))])
-                    : ({{($bits(instruction_if_r.rs_imm)-$bits(instruction_if_r.rd)){1'b0}}
-                        ,{instruction_if_r.rd}});
+                    ? (net_packet_i.net_addr [0+:($bits(instruction_1_r.rs_imm))])
+                    : ({{($bits(instruction_1_r.rs_imm)-$bits(instruction_1_r.rd)){1'b0}}
+                        ,{instruction_1_r.rd}});
 
     // Register file
     reg_file #(
-            .addr_width_p($bits(instruction_if_r.rs_imm))
+            .addr_width_p($bits(instruction_1_r.rs_imm))
         )
         rf (
             .clk(clk),
-            .rs_addr_i(instruction_if_r.rs_imm),
+            .rs_addr_i(instruction_1_r.rs_imm),
             .rd_addr_i(rd_addr),
             .w_addr_i(rd_addr),
             .wen_i(rf_wen),
@@ -225,14 +224,14 @@ module core #(
             .rd_val_o(rd_val)
         );
 
-    assign rs_val_or_zero = instruction_if_r.rs_imm ? rs_val : 32'b0;
+    assign rs_val_or_zero = instruction_1_r.rs_imm ? rs_val : 32'b0;
     assign rd_val_or_zero = rd_addr            ? rd_val : 32'b0;
 
     // ALU
     alu alu_1 (
             .rd_i(rd_val_or_zero),
             .rs_i(rs_val_or_zero),
-            .op_i(instruction_if_r),
+            .op_i(instruction_1_r),
             .result_o(alu_result),
             .jump_now_o(jump_now)
         );
@@ -307,10 +306,10 @@ module core #(
             rf_wd = net_packet_i.net_data;
             end
         // On a JALR, we want to write the return address to the destination register.
-        else if (instruction_if_r ==? kJALR) // TODO: this is written poorly.
+        else if (instruction_1_r ==? kJALR) // TODO: this is written poorly.
             begin
             //rf_wd = pc_plus1;
-            rf_wd = pc_plus1_if;
+            rf_wd = pc_1_r + 1'b1;
             end
         // On a load, we want to write the data from data memory to the destination register.
         else if (is_load_op_c)
@@ -347,7 +346,7 @@ module core #(
 
     // State machine
     cl_state_machine state_machine (
-        .instruction_i(instruction_if_r),
+        .instruction_i(instruction_1_r),
         .state_i(state_r),
         .exception_i(exception_o),
         .net_PC_write_cmd_IDLE_i(net_PC_write_cmd_IDLE),
@@ -373,7 +372,7 @@ module core #(
     assign imem_wen  = net_imem_write_cmd;
 
     // Instructions are shorter than 32 bits of network data
-    assign net_instruction = net_packet_i.net_data [0+:($bits(instruction_if_r))];
+    assign net_instruction = net_packet_i.net_data [0+:($bits(instruction_1_r))];
 
     // barrier_mask_n, which stores the mask for barrier signal
     always_comb
@@ -394,7 +393,7 @@ module core #(
     // or by an an BAR instruction that is committing
     assign barrier_n = net_PC_write_cmd_IDLE
                     ? net_packet_i.net_data[0+:mask_length_gp]
-                    : ((instruction_if_r ==? kBAR) & ~stall)
+                    : ((instruction_1_r ==? kBAR) & ~stall)
                         ? alu_result [0+:mask_length_gp]
                         : barrier_r;
 

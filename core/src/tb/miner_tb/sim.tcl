@@ -23,7 +23,7 @@ add wave    -noupdate   -group {alu}                -radix hexadecimal  /miner_t
 add wave    -noupdate   -group {alu}                -radix symbolic     /miner_tb/dut/core1/alu_1/op_mnemonic
 add wave    -noupdate   -group {alu}                -radix hexadecimal  /miner_tb/dut/core1/alu_1/op_i
 add wave    -noupdate   -group {alu}                -radix hexadecimal  /miner_tb/dut/core1/alu_1/result_o
-add wave    -noupdate   -group {alu}                -radix hexadecimal  /miner_tb/dut/core1/alu_1/jump_now_o
+add wave    -noupdate   -group {alu}                -radix hexadecimal  /miner_tb/dut/core1/alu_1/branch_taken_o
 
 add wave    -noupdate   -group {dmem}               -radix hexadecimal  /miner_tb/dut/core1/to_mem_o
 add wave    -noupdate   -group {dmem}               -radix hexadecimal  /miner_tb/dut/core1/from_mem_i

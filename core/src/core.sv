@@ -43,7 +43,7 @@ module core #(
     logic [31:0] alu_result, rs_val_or_zero, rd_val_or_zero, rs_val, rd_val;
 
     // Reg. File address
-    logic [($bits(instruction_1_r.rs_imm))-1:0] rd_addr;
+    logic [($bits(imem_out.rs_imm))-1:0] rd_addr;
 
     // Data for Reg. File signals
     logic [31:0] rf_wd;
@@ -80,6 +80,7 @@ module core #(
 
     //---- network and barrier signals ----//
     instruction_s net_instruction;
+	 
     logic [mask_length_gp-1:0] barrier_r,      barrier_n,
                             barrier_mask_r, barrier_mask_n;
 
@@ -90,6 +91,8 @@ module core #(
 
     // DEBUG Struct
     assign debug_o = {PC_r, imem_out, state_r, barrier_mask_r, barrier_r};
+	 
+	 instruction_s instruction_1_r;
 
     // Update the PC if we get a PC write command from network, or the core is not stalled.
     assign PC_wen = (net_PC_write_cmd_IDLE || !stall);
@@ -173,7 +176,6 @@ module core #(
 
     // Since imem has one cycle delay and we send next cycle's address, PC_n
     // assign instruction = imem_out;
-    instruction_s instruction_1_r;
     logic [imem_addr_width_p-1:0] pc_1_r;
 
     // First pipecut: IF

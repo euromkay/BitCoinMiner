@@ -66,7 +66,7 @@ module miner_tb();
 
     logic sim_pass = 0;
 
-    const int ALU_TRACE = 0;
+    const int ALU_TRACE = 1;
     const int REG_TRACE = 0;
     integer alu_trace_file, reg_trace_file, counts_file;
 
@@ -560,7 +560,11 @@ module miner_tb();
                         kWAIT:   $fdisplay(alu_trace_file, "WAIT  %d, %d", dut.core1.alu_1.rd_i, dut.core1.alu_1.rs_i);
                         kSW:     $fdisplay(alu_trace_file, "SW    %d, %d", dut.core1.alu_1.rd_i, dut.core1.alu_1.rs_i);
                         kSB:     $fdisplay(alu_trace_file, "SB    %d, %d", dut.core1.alu_1.rd_i, dut.core1.alu_1.rs_i);
-                        default: $fdisplay(alu_trace_file, "Undefined instruction.");
+						kXOR:    $fdisplay(alu_trace_file, "XOR   %d, %d", dut.core1.alu_1.rd_i, dut.core1.alu_1.rs_i);
+						kROL:    $fdisplay(alu_trace_file, "ROL   %d, %d", dut.core1.alu_1.rd_i, dut.core1.alu_1.rs_i);
+						kLA:     $fdisplay(alu_trace_file, "LA    %d, %d", dut.core1.alu_1.rd_i, dut.core1.alu_1.rs_i);
+						kLB:     $fdisplay(alu_trace_file, "LB    %d, %d", dut.core1.alu_1.rd_i, dut.core1.alu_1.rs_i);
+						default: $fdisplay(alu_trace_file, "Undefined instruction.");
                     endcase
                 end
             end

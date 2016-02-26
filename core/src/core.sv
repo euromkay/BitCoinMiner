@@ -112,7 +112,7 @@ module core #(
 
     // Determine next PC
     assign pc_plus1     = PC_r + 1'b1;  // Increment PC.
-    assign imm_jump_add = $signed(instruction_1_r.rs_imm) + $signed(pc_1_r);  // Calculate possible branch address.
+    assign imm_jump_add = $signed(instruction_2_r.rs_imm) + $signed(pc_2_r);  // Calculate possible branch address.
 
     instruction_s instruction_2_r;
 
@@ -179,7 +179,12 @@ module core #(
     // First pipecut: IF
     always_ff @ (posedge clk)
     begin
-        if (!stall)
+		if (!n_reset)
+			begin
+				instruction_1_r <= 0;
+				pc_1_r			 <= 0;
+			end
+        else if (!stall)
         begin
             if (branch_taken || (instruction_1_r ==? kJALR) || (instruction_1_r ==? kWAIT) || (instruction_2_r ==? kJALR))
             begin
@@ -207,11 +212,20 @@ module core #(
     // Address for Reg. File is shorter than address of Ins. memory in network data
     // Since network can write into immediate registers, the address is wider
     // but for the destination register in an instruction the extra bits must be zero
-    assign rd_addr = (net_reg_write_cmd)
+    assign rd_addr = instruction_1_r.rd; /*(net_reg_write_cmd)
                     ? (net_packet_i.net_addr [0+:($bits(instruction_1_r.rs_imm))])
-                    : ({{($bits(instruction_1_r.rs_imm)-$bits(instruction_1_r.rd)){1'b0}}
-                        ,{instruction_1_r.rd}});
+                    : 
+						   ({{($bits(instruction_1_r.rs_imm)-$bits(instruction_1_r.rd)){1'b0}}
+                        ,{instruction_1_r.rd}});  */
+								
+	
+	
     logic [($bits(instruction_1_r.rs_imm))-1:0] rs_addr_2_r, rd_addr_2_r;
+	 
+	 logic [($bits(instruction_1_r.rs_imm))-1:0] w_addr;
+	 assign w_addr = (net_reg_write_cmd)
+                    ? (net_packet_i.net_addr [0+:($bits(instruction_1_r.rs_imm))]) :
+						  rd_addr_2_r;
 
     // Register file
     reg_file #(
@@ -221,7 +235,7 @@ module core #(
             .clk(clk),
             .rs_addr_i(instruction_1_r.rs_imm),
             .rd_addr_i(rd_addr),
-            .w_addr_i(rd_addr_2_r),
+            .w_addr_i(w_addr),
             .wen_i(rf_wen),
             .w_data_i(rf_wd),
             .rs_val_o(rs_val),
@@ -239,8 +253,25 @@ module core #(
 
     always_ff @ (posedge clk)
     begin
-        if (!stall)
-        begin
+			if (!n_reset)
+			begin
+				instruction_2_r  <= 0;
+            op_writes_rf_2_r <= 1'b0;
+            is_store_op_2_r  <= 1'b0;
+				pc_2_r 			  <=  0;
+				
+				rs_addr_2_r <= 0;
+            rs_val_2_r  <= 0;
+            rd_val_2_r  <= 0;
+            rd_addr_2_r <= 0;
+
+            //Control signals
+            is_load_op_2_r    <= 0;
+            is_mem_op_2_r     <= 0;
+            is_byte_op_2_r    <= 0;
+			end
+			else if (!stall)
+			begin
             // Should wait be checked here?
             if (branch_taken)// || (instruction_1_r ==? kJALR) || (instruction_1_r ==? kWAIT))
             begin
@@ -248,6 +279,9 @@ module core #(
 
                 op_writes_rf_2_r <= 1'b0;
                 is_store_op_2_r  <= 1'b0;
+					 
+					 rs_val_2_r  <= 0;
+					 rd_val_2_r  <= 0;
             end
             else
             begin
@@ -256,18 +290,37 @@ module core #(
 
                 op_writes_rf_2_r <= op_writes_rf_c;
                 is_store_op_2_r  <= is_store_op_c;
+					 
+					 if(instruction_1_r.rs_imm == w_addr && op_writes_rf_2_r)
+					 begin
+						rs_val_2_r <= rf_wd;
+					 end
+					 else
+					 begin
+						rs_val_2_r  <= rs_val_or_zero;
+					end
+					 
+					 
+					 if(rd_addr == w_addr && op_writes_rf_2_r)
+					 begin
+					   rd_val_2_r <= rf_wd;
+					 end
+					 else
+					 begin
+						rd_val_2_r  <= rd_val_or_zero;
+					end
+					 
+					 
             end
             //addresses and data
             rs_addr_2_r <= instruction_1_r.rs_imm;
-            rs_val_2_r  <= rs_val_or_zero;
-            rd_val_2_r  <= rd_val_or_zero;
+            
             rd_addr_2_r <= rd_addr;
 
             //Control signals
             is_load_op_2_r    <= is_load_op_c;
             is_mem_op_2_r     <= is_mem_op_c;
             is_byte_op_2_r    <= is_byte_op_c;
-
         end
     end
 

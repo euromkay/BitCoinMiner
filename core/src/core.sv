@@ -91,8 +91,6 @@ module core #(
 
     // DEBUG Struct
     assign debug_o = {PC_r, imem_out, state_r, barrier_mask_r, barrier_r};
-	 
-	 instruction_s instruction_1_r;
 
     // Update the PC if we get a PC write command from network, or the core is not stalled.
     assign PC_wen = (net_PC_write_cmd_IDLE || !stall);
@@ -112,12 +110,13 @@ module core #(
             end
         end
     end
+	 
+	 instruction_s instruction_1_r;
+    instruction_s instruction_2_r;
 
     // Determine next PC
     assign pc_plus1     = PC_r + 1'b1;  // Increment PC.
     assign imm_jump_add = $signed(instruction_2_r.rs_imm) + $signed(pc_2_r);  // Calculate possible branch address.
-
-    instruction_s instruction_2_r;
 
     // Next PC is based on network or the instruction
     always_comb

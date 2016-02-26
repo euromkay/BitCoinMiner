@@ -65,8 +65,8 @@ module core_tb();
     int instruction_count = 0;
     int sim_pass = 0;
     
-    const int ALU_TRACE = 0;
-    const int REG_TRACE = 0;
+    const int ALU_TRACE = 1;
+    const int REG_TRACE = 1;
     integer alu_trace_file, reg_trace_file;
     
     initial

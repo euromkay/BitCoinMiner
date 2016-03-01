@@ -111,7 +111,7 @@ module core #(
         end
     end
 
-	 instruction_s instruction_1_r;
+	instruction_s instruction_1_r;
     instruction_s instruction_2_r;
 
     // Determine next PC

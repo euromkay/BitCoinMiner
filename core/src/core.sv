@@ -80,7 +80,7 @@ module core #(
 
     //---- network and barrier signals ----//
     instruction_s net_instruction;
-	 
+
     logic [mask_length_gp-1:0] barrier_r,      barrier_n,
                             barrier_mask_r, barrier_mask_n;
 
@@ -110,7 +110,7 @@ module core #(
             end
         end
     end
-	 
+
 	 instruction_s instruction_1_r;
     instruction_s instruction_2_r;
 
@@ -187,7 +187,7 @@ module core #(
 			end
         else if (!stall)
         begin
-            if (branch_taken || (instruction_1_r ==? kJALR) || (instruction_1_r ==? kWAIT) || (instruction_2_r ==? kJALR))
+            if (branch_taken || (instruction_1_r ==? kJALR) || (instruction_1_r ==? kWAIT) || (instruction_2_r ==? kJALR) || (instruction_2_r ==? kWAIT))
             begin
                 instruction_1_r <= 0;
             end
@@ -215,14 +215,14 @@ module core #(
     // but for the destination register in an instruction the extra bits must be zero
     assign rd_addr = instruction_1_r.rd; /*(net_reg_write_cmd)
                     ? (net_packet_i.net_addr [0+:($bits(instruction_1_r.rs_imm))])
-                    : 
+                    :
 						   ({{($bits(instruction_1_r.rs_imm)-$bits(instruction_1_r.rd)){1'b0}}
                         ,{instruction_1_r.rd}});  */
-								
-	
-	
+
+
+
     logic [($bits(instruction_1_r.rs_imm))-1:0] rs_addr_2_r, rd_addr_2_r;
-	 
+
 	 logic [($bits(instruction_1_r.rs_imm))-1:0] w_addr;
 	 assign w_addr = (net_reg_write_cmd)
                     ? (net_packet_i.net_addr [0+:($bits(instruction_1_r.rs_imm))]) :
@@ -260,7 +260,7 @@ module core #(
             op_writes_rf_2_r <= 1'b0;
             is_store_op_2_r  <= 1'b0;
 				pc_2_r 			  <=  0;
-				
+
 				rs_addr_2_r <= 0;
             rs_val_2_r  <= 0;
             rd_val_2_r  <= 0;
@@ -280,7 +280,7 @@ module core #(
 
                 op_writes_rf_2_r <= 1'b0;
                 is_store_op_2_r  <= 1'b0;
-					 
+
 					 rs_val_2_r  <= 0;
 					 rd_val_2_r  <= 0;
             end
@@ -291,7 +291,7 @@ module core #(
 
                 op_writes_rf_2_r <= op_writes_rf_c;
                 is_store_op_2_r  <= is_store_op_c;
-					 
+
 					 if(instruction_1_r.rs_imm == w_addr && op_writes_rf_2_r)
 					 begin
 						rs_val_2_r <= rf_wd;
@@ -300,8 +300,8 @@ module core #(
 					 begin
 						rs_val_2_r  <= rs_val_or_zero;
 					end
-					 
-					 
+
+
 					 if(rd_addr == w_addr && op_writes_rf_2_r)
 					 begin
 					   rd_val_2_r <= rf_wd;
@@ -310,12 +310,12 @@ module core #(
 					 begin
 						rd_val_2_r  <= rd_val_or_zero;
 					end
-					 
-					 
+
+
             end
             //addresses and data
             rs_addr_2_r <= instruction_1_r.rs_imm;
-            
+
             rd_addr_2_r <= rd_addr;
 
             //Control signals

@@ -564,7 +564,8 @@ module miner_tb();
 						kROL:    $fdisplay(alu_trace_file, "ROL   %d, %d", dut.core1.alu_1.rd_i, dut.core1.alu_1.rs_i);
 						kLA:     $fdisplay(alu_trace_file, "LA    %d, %d", dut.core1.alu_1.rd_i, dut.core1.alu_1.rs_i);
 						kLB:     $fdisplay(alu_trace_file, "LB    %d, %d", dut.core1.alu_1.rd_i, dut.core1.alu_1.rs_i);
-						default: $fdisplay(alu_trace_file, "Undefined instruction.");
+						kROR:     $fdisplay(alu_trace_file, "ROR   %d, %d", dut.core1.alu_1.rd_i, dut.core1.alu_1.rs_i);
+						default: $fdisplay(alu_trace_file, "Undefined instruction. %d %d, %d", dut.core1.alu_1.op_i, dut.core1.alu_1.rd_i, dut.core1.alu_1.rs_i);
                     endcase
                 end
             end

@@ -43,7 +43,7 @@ module core #(
     logic [31:0] alu_result, rs_val_or_zero, rd_val_or_zero, rs_val, rd_val;
 
     // Reg. File address
-    logic [($bits(imem_out.rs_imm))-1:0] rd_addr;
+    logic [($bits(imem_out.rs_imm))-1:0] rd_addr, rs_addr;
 
     // Data for Reg. File signals
     logic [31:0] rf_wd;
@@ -218,23 +218,23 @@ module core #(
                     :
 						   ({{($bits(instruction_1_r.rs_imm)-$bits(instruction_1_r.rd)){1'b0}}
                         ,{instruction_1_r.rd}});  */
-
+    assign rs_addr = instruction_1_r.rs_imm;
 
 
     logic [($bits(instruction_1_r.rs_imm))-1:0] rs_addr_2_r, rd_addr_2_r;
 
 	 logic [($bits(instruction_1_r.rs_imm))-1:0] w_addr;
 	 assign w_addr = (net_reg_write_cmd)
-                    ? (net_packet_i.net_addr [0+:($bits(instruction_1_r.rs_imm))]) :
+                    ? (net_packet_i.net_addr [0+:($bits(rs_addr))]) :
 						  rd_addr_2_r;
 
     // Register file
     reg_file #(
-            .addr_width_p($bits(instruction_1_r.rs_imm))
+            .addr_width_p($bits(rs_addr))
         )
         rf (
             .clk(clk),
-            .rs_addr_i(instruction_1_r.rs_imm),
+            .rs_addr_i(rs_addr),
             .rd_addr_i(rd_addr),
             .w_addr_i(w_addr),
             .wen_i(rf_wen),
@@ -247,42 +247,43 @@ module core #(
     logic [imem_addr_width_p-1:0] pc_2_r;
     logic [31:0] rs_val_2_r, rd_val_2_r;
     logic is_load_op_2_r, op_writes_rf_2_r, is_store_op_2_r, is_mem_op_2_r, is_byte_op_2_r;
+    logic is_load_op_3_r, op_writes_rf_3_r;
 
 
-    assign rs_val_or_zero = instruction_1_r.rs_imm ? rs_val : 32'b0;
-    assign rd_val_or_zero = rd_addr            ? rd_val : 32'b0;
+    assign rs_val_or_zero = rs_addr ? rs_val : 32'b0;
+    assign rd_val_or_zero = rd_addr ? rd_val : 32'b0;
 
     always_ff @ (posedge clk)
     begin
 			if (!n_reset)
 			begin
 				instruction_2_r  <= 0;
-            op_writes_rf_2_r <= 1'b0;
-            is_store_op_2_r  <= 1'b0;
-				pc_2_r 			  <=  0;
+				pc_2_r 			 <= 0;
+				
+                rs_addr_2_r <= 0;
+                rs_val_2_r  <= 0;
 
-				rs_addr_2_r <= 0;
-            rs_val_2_r  <= 0;
-            rd_val_2_r  <= 0;
-            rd_addr_2_r <= 0;
+                rd_val_2_r  <= 0;
+                rd_addr_2_r <= 0;
 
-            //Control signals
-            is_load_op_2_r    <= 0;
-            is_mem_op_2_r     <= 0;
-            is_byte_op_2_r    <= 0;
+                //Control signals
+                is_load_op_2_r    <= 0;
+                is_mem_op_2_r     <= 0;
+                is_byte_op_2_r    <= 0;
+                op_writes_rf_2_r <= 0;
+                is_store_op_2_r  <= 0;
 			end
 			else if (!stall)
 			begin
-            // Should wait be checked here?
             if (branch_taken)// || (instruction_1_r ==? kJALR) || (instruction_1_r ==? kWAIT))
             begin
                 instruction_2_r <= 0;
 
-                op_writes_rf_2_r <= 1'b0;
-                is_store_op_2_r  <= 1'b0;
+                op_writes_rf_2_r <= 0;
+                is_store_op_2_r  <= 0;
 
-					 rs_val_2_r  <= 0;
-					 rd_val_2_r  <= 0;
+				rs_val_2_r  <= 0;
+				rd_val_2_r  <= 0;
             end
             else
             begin
@@ -292,25 +293,24 @@ module core #(
                 op_writes_rf_2_r <= op_writes_rf_c;
                 is_store_op_2_r  <= is_store_op_c;
 
-					 if(instruction_1_r.rs_imm == w_addr && op_writes_rf_2_r)
-					 begin
-						rs_val_2_r <= rf_wd;
-					 end
-					 else
-					 begin
-						rs_val_2_r  <= rs_val_or_zero;
-					end
+				if(rs_addr == w_addr && op_writes_rf_2_r)
+				begin
+					rs_val_2_r <= rf_wd;
+				end
+				else
+				begin
+					rs_val_2_r  <= rs_val_or_zero;
+				end
 
 
-					 if(rd_addr == w_addr && op_writes_rf_2_r)
-					 begin
-					   rd_val_2_r <= rf_wd;
-					 end
-					 else
-					 begin
-						rd_val_2_r  <= rd_val_or_zero;
-					end
-
+				if(rd_addr == w_addr && op_writes_rf_2_r)
+				begin
+				    rd_val_2_r <= rf_wd;
+				end
+				else
+				begin
+					rd_val_2_r  <= rd_val_or_zero;
+				end
 
             end
             //addresses and data
@@ -343,17 +343,8 @@ module core #(
         yumi          : yumi_to_mem_c
     };
 
-    always_comb
-        begin
-            if(is_store_op_2_r)
-            begin
-                data_mem_addr = rd_val_2_r;
-            end
-            else
-            begin
-                data_mem_addr = rs_val_2_r;
-            end
-        end
+    //if is store, we the address comes from rd
+    assign data_mem_addr = is_store_op_2_r ? rd_val_2_r : rs_val_2_r;
 
     // stall and memory stages signals
     // rf structural hazard and imem structural hazard (can't load next instruction)

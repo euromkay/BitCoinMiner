@@ -113,10 +113,11 @@ module core #(
 
 	instruction_s instruction_1_r;
     instruction_s instruction_2_r;
+    instruction_s instruction_3_r;
 
     // Determine next PC
     assign pc_plus1     = PC_r + 1'b1;  // Increment PC.
-    assign imm_jump_add = $signed(instruction_2_r.rs_imm) + $signed(pc_2_r);  // Calculate possible branch address.
+    assign imm_jump_add = $signed(rs_addr_2_r) + $signed(pc_2_r);  // Calculate possible branch address.
 
     // Next PC is based on network or the instruction
     always_comb
@@ -158,8 +159,7 @@ module core #(
     end
 
     // Selection between network and core for instruction address
-    assign imem_addr = (net_imem_write_cmd) ? net_packet_i.net_addr
-                                        : PC_n;
+    assign imem_addr = (net_imem_write_cmd) ? net_packet_i.net_addr : PC_n;
 
     // Instruction memory
     instr_mem #(
@@ -175,7 +175,7 @@ module core #(
 
     // Since imem has one cycle delay and we send next cycle's address, PC_n
     // assign instruction = imem_out;
-    logic [imem_addr_width_p-1:0] pc_1_r;
+    logic [imem_addr_width_p-1:0] PC_1_r;
 
     // First pipecut: IF
     always_ff @ (posedge clk)
@@ -183,18 +183,18 @@ module core #(
 		if (!n_reset)
 			begin
 				instruction_1_r <= 0;
-				pc_1_r			 <= 0;
+				PC_1_r			<= 0;
 			end
         else if (!stall)
         begin
-            if (branch_taken || (instruction_1_r ==? kJALR) || (instruction_1_r ==? kWAIT) || (instruction_2_r ==? kJALR) || (instruction_2_r ==? kWAIT))
+            if (branch_taken || (instruction_1_r ==? kJALR) || (instruction_1_r ==? kWAIT) || (instruction_2_r ==? kJALR) || (instruction_2_r ==? kWAIT) || (instruction_3_r ==? kWAIT))
             begin
                 instruction_1_r <= 0;
             end
             else
             begin
                 instruction_1_r <= imem_out;
-                pc_1_r <= PC_r;
+                PC_1_r <= PC_r;
             end
         end
     end
@@ -222,11 +222,15 @@ module core #(
 
 
     logic [($bits(instruction_1_r.rs_imm))-1:0] rs_addr_2_r, rd_addr_2_r;
+	logic [($bits(instruction_1_r.rs_imm))-1:0] w_addr;
+    logic [($bits(rs_addr_2_r))-1:0] wd_addr_3_r;
 
-	 logic [($bits(instruction_1_r.rs_imm))-1:0] w_addr;
-	 assign w_addr = (net_reg_write_cmd)
+    logic [31:0] wd_val_3_r;
+    logic [31:0] alu_mem_result;
+
+    assign w_addr = (net_reg_write_cmd)
                     ? (net_packet_i.net_addr [0+:($bits(rs_addr))]) :
-						  rd_addr_2_r;
+						  wd_addr_3_r;
 
     // Register file
     reg_file #(
@@ -247,7 +251,9 @@ module core #(
     logic [imem_addr_width_p-1:0] pc_2_r;
     logic [31:0] rs_val_2_r, rd_val_2_r;
     logic is_load_op_2_r, op_writes_rf_2_r, is_store_op_2_r, is_mem_op_2_r, is_byte_op_2_r;
-    logic is_load_op_3_r, op_writes_rf_3_r;
+    logic op_writes_rf_3_r;
+
+    
 
 
     assign rs_val_or_zero = rs_addr ? rs_val : 32'b0;
@@ -255,27 +261,27 @@ module core #(
 
     always_ff @ (posedge clk)
     begin
-			if (!n_reset)
-			begin
-				instruction_2_r  <= 0;
-				pc_2_r 			 <= 0;
-				
-                rs_addr_2_r <= 0;
-                rs_val_2_r  <= 0;
+		if (!n_reset)
+		begin
+			instruction_2_r  <= 0;
+			pc_2_r 			 <= 0;
+			
+            rs_addr_2_r <= 0;
+            rs_val_2_r  <= 0;
 
-                rd_val_2_r  <= 0;
-                rd_addr_2_r <= 0;
+            rd_val_2_r  <= 0;
+            rd_addr_2_r <= 0;
 
-                //Control signals
-                is_load_op_2_r    <= 0;
-                is_mem_op_2_r     <= 0;
-                is_byte_op_2_r    <= 0;
-                op_writes_rf_2_r <= 0;
-                is_store_op_2_r  <= 0;
-			end
-			else if (!stall)
-			begin
-            if (branch_taken)// || (instruction_1_r ==? kJALR) || (instruction_1_r ==? kWAIT))
+            //Control signals
+            is_load_op_2_r    <= 0;
+            is_mem_op_2_r     <= 0;
+            is_byte_op_2_r    <= 0;
+            op_writes_rf_2_r <= 0;
+            is_store_op_2_r  <= 0;
+		end
+		else if (!stall)
+		begin
+            if (branch_taken)
             begin
                 instruction_2_r <= 0;
 
@@ -288,25 +294,33 @@ module core #(
             else
             begin
                 instruction_2_r <= instruction_1_r;
-                pc_2_r <= pc_1_r;
+                pc_2_r <= PC_1_r;
 
                 op_writes_rf_2_r <= op_writes_rf_c;
                 is_store_op_2_r  <= is_store_op_c;
 
-				if(rs_addr == w_addr && op_writes_rf_2_r)
+				if(rs_addr == rd_addr_2_r && op_writes_rf_2_r)
 				begin
 					rs_val_2_r <= rf_wd;
 				end
-				else
+				else if (rs_addr == wd_addr_3_r && op_writes_rf_3_r)
+                begin
+                    rs_val_2_r <= alu_mem_result;
+                end
+                else
 				begin
 					rs_val_2_r  <= rs_val_or_zero;
 				end
 
 
-				if(rd_addr == w_addr && op_writes_rf_2_r)
-				begin
-				    rd_val_2_r <= rf_wd;
-				end
+				if(rd_addr == rd_addr_2_r && op_writes_rf_2_r)
+                begin
+                    rd_val_2_r <= alu_mem_result;
+                end
+                else if (rd_addr == wd_addr_3_r && op_writes_rf_3_r)
+                begin
+                    rd_val_2_r <= wd_val_3_r;
+                end
 				else
 				begin
 					rd_val_2_r  <= rd_val_or_zero;
@@ -315,7 +329,6 @@ module core #(
             end
             //addresses and data
             rs_addr_2_r <= instruction_1_r.rs_imm;
-
             rd_addr_2_r <= rd_addr;
 
             //Control signals
@@ -334,6 +347,7 @@ module core #(
             .branch_taken_o(branch_taken)
         );
 
+    assign data_mem_addr = is_store_op_2_r ? rd_val_2_r : rs_val_2_r;
     // Data_mem
     assign to_mem_o = '{
         write_data    : rs_val_2_r,
@@ -343,12 +357,35 @@ module core #(
         yumi          : yumi_to_mem_c
     };
 
+    //logic op_writes_rf_3_r;
+    //logic [31:0] wd_val_3_r;
+    //logic [($bits(rs_addr_2_r))-1:0] wd_addr_3_r;
+
+    always_ff @ (posedge clk)
+    begin
+        if (!n_reset)
+        begin
+            wd_addr_3_r      <= 0;
+            wd_val_3_r       <= 0;
+            op_writes_rf_3_r <= 0;
+            instruction_3_r  <= 0;
+        end
+        else if (!stall)
+        begin
+            instruction_3_r  <= instruction_2_r;
+            wd_addr_3_r      <= rd_addr_2_r;
+            wd_val_3_r   <= alu_mem_result;
+            op_writes_rf_3_r <= op_writes_rf_2_r;
+        end
+    end
+
+    assign alu_mem_result = is_load_op_2_r ? from_mem_i.read_data : alu_result;
+
     //if is store, we the address comes from rd
-    assign data_mem_addr = is_store_op_2_r ? rd_val_2_r : rs_val_2_r;
 
     // stall and memory stages signals
     // rf structural hazard and imem structural hazard (can't load next instruction)
-    assign stall_non_mem = (net_reg_write_cmd && op_writes_rf_2_r)
+    assign stall_non_mem = (net_reg_write_cmd && op_writes_rf_3_r)
                         || (net_imem_write_cmd);
     // Stall if LD/ST still active; or in non-RUN state
     assign stall = stall_non_mem || (mem_stage_n != DMEM_IDLE) || (state_r != RUN);// ||  (inserted_stalls != 2'd4);
@@ -383,7 +420,7 @@ module core #(
     end
 
     // If either the network or instruction writes to the register file, set write enable.
-    assign rf_wen = (net_reg_write_cmd || (op_writes_rf_2_r && !stall)); //TODO should be 3`
+    assign rf_wen = (net_reg_write_cmd || (op_writes_rf_3_r && !stall)); //TODO should be 3`
 
     // Select the write data for register file from network, the PC_plus1 for JALR,
     // data memory or ALU result
@@ -401,15 +438,15 @@ module core #(
             rf_wd = pc_2_r + 1'b1;
             end
         // On a load, we want to write the data from data memory to the destination register.
-        else if (is_load_op_2_r)
-            begin
-            rf_wd = from_mem_i.read_data;
-            end
-        // Otherwise, the result should be the ALU output.
         else
             begin
-            rf_wd = alu_result;
-        end
+            rf_wd = wd_val_3_r;
+            end
+        // Otherwise, the result should be the ALU output.
+        //else
+            //begin
+            //rf_wd = alu_result;
+        //end
     end
 
     // Sequential part, including barrier, exception and state
@@ -435,7 +472,7 @@ module core #(
 
     // State machine
     cl_state_machine state_machine (
-        .instruction_i(instruction_2_r),
+        .instruction_i(instruction_3_r),
         .state_i(state_r),
         .exception_i(exception_o),
         .net_PC_write_cmd_IDLE_i(net_PC_write_cmd_IDLE),
@@ -482,7 +519,7 @@ module core #(
     // or by an an BAR instruction that is committing
     assign barrier_n = net_PC_write_cmd_IDLE
                     ? net_packet_i.net_data[0+:mask_length_gp]
-                    : ((instruction_2_r ==? kBAR) & ~stall)
+                    : ((instruction_3_r ==? kBAR) & ~stall)
                         ? alu_result [0+:mask_length_gp]
                         : barrier_r;
 

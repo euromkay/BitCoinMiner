@@ -15,9 +15,9 @@ module reg_file  #(
     );
 
     logic [data_width_p-1:0] RF [0:2**addr_width_p-1];
-
-    assign rs_val_o = RF [rs_addr_i];
+    
     assign rd_val_o = RF [rd_addr_i];
+    assign rs_val_o = RF [rs_addr_i];
 
     always_ff @ (posedge clk)
         begin

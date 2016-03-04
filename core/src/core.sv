@@ -177,7 +177,7 @@ module core #(
     // assign instruction = imem_out;
     logic [imem_addr_width_p-1:0] PC_1_r;
 
-    // First pipecut: IF
+    // First pipecut: IF/ID
     always_ff @ (posedge clk)
     begin
 		if (!n_reset)
@@ -253,19 +253,17 @@ module core #(
     logic is_load_op_2_r, op_writes_rf_2_r, is_store_op_2_r, is_mem_op_2_r, is_byte_op_2_r;
     logic op_writes_rf_3_r;
 
-    
-
-
     assign rs_val_or_zero = rs_addr ? rs_val : 32'b0;
     assign rd_val_or_zero = rd_addr ? rd_val : 32'b0;
 
+    // Second pipecut: ID/EX
     always_ff @ (posedge clk)
     begin
 		if (!n_reset)
 		begin
 			instruction_2_r  <= 0;
 			pc_2_r 			 <= 0;
-			
+
             rs_addr_2_r <= 0;
             rs_val_2_r  <= 0;
 
@@ -301,11 +299,11 @@ module core #(
 
 				if(rs_addr == rd_addr_2_r && op_writes_rf_2_r)
 				begin
-					rs_val_2_r <= rf_wd;
+					rs_val_2_r <= alu_mem_result;
 				end
 				else if (rs_addr == wd_addr_3_r && op_writes_rf_3_r)
                 begin
-                    rs_val_2_r <= alu_mem_result;
+                    rs_val_2_r <= wd_val_3_r;
                 end
                 else
 				begin
@@ -361,6 +359,7 @@ module core #(
     //logic [31:0] wd_val_3_r;
     //logic [($bits(rs_addr_2_r))-1:0] wd_addr_3_r;
 
+    // Third pipecut: EX/WB
     always_ff @ (posedge clk)
     begin
         if (!n_reset)

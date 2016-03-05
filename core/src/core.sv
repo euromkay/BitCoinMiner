@@ -35,7 +35,6 @@ module core #(
                                 pc_plus1, imem_addr,
                                 imm_jump_add;
 
-
     // Ins. memory output
     instruction_s imem_out;
 
@@ -248,7 +247,7 @@ module core #(
         );
 
     //instruction_s instruction_2_r;  defined above
-    logic [imem_addr_width_p-1:0] pc_2_r;
+    logic [imem_addr_width_p-1:0] pc_2_r, pc_3_r;
     logic [31:0] rs_val_2_r, rd_val_2_r;
     logic is_load_op_2_r, op_writes_rf_2_r, is_store_op_2_r, is_mem_op_2_r, is_byte_op_2_r;
     logic op_writes_rf_3_r;
@@ -307,7 +306,7 @@ module core #(
                 end
                 else
 				begin
-					rs_val_2_r  <= rs_val_or_zero;
+					rs_val_2_r <= rs_val_or_zero;
 				end
 
 
@@ -321,7 +320,7 @@ module core #(
                 end
 				else
 				begin
-					rd_val_2_r  <= rd_val_or_zero;
+					rd_val_2_r <= rd_val_or_zero;
 				end
 
             end
@@ -364,6 +363,7 @@ module core #(
     begin
         if (!n_reset)
         begin
+            pc_3_r           <= 0;
             wd_addr_3_r      <= 0;
             wd_val_3_r       <= 0;
             op_writes_rf_3_r <= 0;
@@ -375,6 +375,7 @@ module core #(
             wd_addr_3_r      <= rd_addr_2_r;
             wd_val_3_r   <= alu_mem_result;
             op_writes_rf_3_r <= op_writes_rf_2_r;
+            pc_3_r <= pc_2_r;
         end
     end
 
@@ -428,24 +429,18 @@ module core #(
         // When the network sends a reg file write command, take data from network.
         if (net_reg_write_cmd)
             begin
-            rf_wd = net_packet_i.net_data;
+                rf_wd = net_packet_i.net_data;
             end
         // On a JALR, we want to write the return address to the destination register.
-        else if (instruction_2_r ==? kJALR) // TODO: this is written poorly.
+        else if (instruction_3_r ==? kJALR) // TODO: this is written poorly.
             begin
-            //rf_wd = pc_plus1;
-            rf_wd = pc_2_r + 1'b1;
+                rf_wd = pc_3_r + 1'b1;
             end
         // On a load, we want to write the data from data memory to the destination register.
         else
             begin
-            rf_wd = wd_val_3_r;
+                rf_wd = wd_val_3_r;
             end
-        // Otherwise, the result should be the ALU output.
-        //else
-            //begin
-            //rf_wd = alu_result;
-        //end
     end
 
     // Sequential part, including barrier, exception and state

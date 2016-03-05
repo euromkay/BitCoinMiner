@@ -514,7 +514,7 @@ module core #(
     // or by an an BAR instruction that is committing
     assign barrier_n = net_PC_write_cmd_IDLE
                     ? net_packet_i.net_data[0+:mask_length_gp]
-                    : ((instruction_3_r ==? kBAR) & ~stall)
+                    : ((instruction_2_r ==? kBAR) & ~stall)
                         ? alu_result [0+:mask_length_gp]
                         : barrier_r;
 

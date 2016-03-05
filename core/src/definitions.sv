@@ -44,7 +44,7 @@ package definitions;
     const logic [15:0]kLBU   = 16'b11001_?????_??????;
     const logic [15:0]kSW    = 16'b11010_?????_??????;
     const logic [15:0]kSB    = 16'b11011_?????_??????;
-    // 28
+    const logic [15:0]kNOP   = 16'b11111_?????_??????;// 31
     // 29
     // 30
     // 31
@@ -73,8 +73,8 @@ package definitions;
         LBU         = 5'h19,
         SW          = 5'h1A,
         SB          = 5'h1B,
-        BARR,
-        NOP
+		  NOP			  = 5'h1F,
+        BARR		  = 5'h1E
     } op_mne;
     
     //---- Controller states ----//

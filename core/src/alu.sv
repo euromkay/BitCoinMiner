@@ -53,6 +53,7 @@ module alu (
                 begin
                 result_o   = rd_i;
             end
+				
 
             default:
                 begin
@@ -67,10 +68,12 @@ module alu (
             begin
             op_mnemonic = BARR;
             end
+				/*
         else if ((op_i.opcode == 0) && (rd_i == 0) && (rs_i == 0))
             begin
             op_mnemonic = NOP;
         end
+		  */
 
     end // always_comb
 

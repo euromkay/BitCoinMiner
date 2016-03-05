@@ -181,14 +181,14 @@ module core #(
     begin
 		if (!n_reset)
 			begin
-				instruction_1_r <= 0;
+				instruction_1_r <= kNOP;
 				PC_1_r			<= 0;
 			end
         else if (!stall)
         begin
             if (branch_taken || (instruction_1_r ==? kJALR) || (instruction_1_r ==? kWAIT) || (instruction_2_r ==? kJALR) || (instruction_2_r ==? kWAIT) || (instruction_3_r ==? kWAIT))
             begin
-                instruction_1_r <= 0;
+                instruction_1_r <= kNOP;
             end
             else
             begin
@@ -260,7 +260,7 @@ module core #(
     begin
 		if (!n_reset)
 		begin
-			instruction_2_r  <= 0;
+			instruction_2_r  <= kNOP;
 			pc_2_r 			 <= 0;
 
             rs_addr_2_r <= 0;
@@ -280,8 +280,9 @@ module core #(
 		begin
             if (branch_taken)
             begin
-                instruction_2_r <= 0;
+                instruction_2_r <= kNOP;
 
+					 
                 op_writes_rf_2_r <= 0;
                 is_store_op_2_r  <= 0;
 
@@ -367,7 +368,7 @@ module core #(
             wd_addr_3_r      <= 0;
             wd_val_3_r       <= 0;
             op_writes_rf_3_r <= 0;
-            instruction_3_r  <= 0;
+            instruction_3_r  <= kNOP;
         end
         else if (!stall)
         begin

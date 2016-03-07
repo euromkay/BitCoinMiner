@@ -364,6 +364,7 @@ module core_tb();
                         kWAIT:   $fdisplay(alu_trace_file, "WAIT  %d, %d", dut.core1.alu_1.rd_i, dut.core1.alu_1.rs_i);
                         kSW:     $fdisplay(alu_trace_file, "SW    %d, %d", dut.core1.alu_1.rd_i, dut.core1.alu_1.rs_i);
                         kSB:     $fdisplay(alu_trace_file, "SB    %d, %d", dut.core1.alu_1.rd_i, dut.core1.alu_1.rs_i);
+                        kNOP:    begin end
                         default: $fdisplay(alu_trace_file, "Undefined instruction.");
                     endcase
                 end

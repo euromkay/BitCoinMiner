@@ -9,7 +9,7 @@ module alu (
         output logic branch_taken_o
     );
 
-    op_mne op_mnemonic;
+    //op_mne op_mnemonic;
 
     always_comb
         begin
@@ -61,19 +61,6 @@ module alu (
                 branch_taken_o = 1'b0; 
             end
         endcase
-
-        // Set symbolic opcode
-        op_mnemonic = op_mne'(op_i.opcode);
-        if (op_i ==? kBAR)
-            begin
-            op_mnemonic = BARR;
-            end
-				/*
-        else if ((op_i.opcode == 0) && (rd_i == 0) && (rs_i == 0))
-            begin
-            op_mnemonic = NOP;
-        end
-		  */
 
     end // always_comb
 

@@ -110,13 +110,20 @@ module core #(
         end
     end
 
-	instruction_s instruction_1_r;
-    instruction_s instruction_2_r;
-    instruction_s instruction_3_r;
+    instruction_s instruction_1_r, instruction_2_r, instruction_3_r;
+
+    logic [($bits(instruction_1_r.rs_imm))-1:0] rs_addr_2_r, rd_addr_2_r;
+    logic [31:0] rs_val_2_r, rd_val_2_r;
+
+    logic [imem_addr_width_p-1:0] PC_2_r, PC_3_r;
+    logic is_load_op_2_r, op_writes_rf_2_r, is_store_op_2_r, is_mem_op_2_r, is_byte_op_2_r;
+    logic op_writes_rf_3_r;
+
+    logic [31:0] alu_mem_result;
 
     // Determine next PC
     assign pc_plus1     = PC_r + 1'b1;  // Increment PC.
-    assign imm_jump_add = $signed(rs_addr_2_r) + $signed(pc_2_r);  // Calculate possible branch address.
+    assign imm_jump_add = $signed(rs_addr_2_r) + $signed(PC_2_r);  // Calculate possible branch address.
 
     // Next PC is based on network or the instruction
     always_comb
@@ -125,36 +132,30 @@ module core #(
 
         // Should not update PC.
         if (!PC_wen)
-            begin
+        begin
             PC_n = PC_r;
-            end
+        end
         // If the network is writing to PC, use that instead.
         else if (net_PC_write_cmd_IDLE)
-            begin
+        begin
             PC_n = net_packet_i.net_addr;
-            end
-        else
-            begin
-            unique casez (instruction_2_r)
-                // On a JALR, jump to the address in RS (passed via alu_result).
-                kJALR:
-                    begin
-                    PC_n = alu_result[0+:imem_addr_width_p];
-                end
-
-                // Branch instructions
-                kBNEQZ, kBEQZ, kBLTZ, kBGTZ:
-                    begin
-                    // If the branch is taken, use the calculated branch address.
-                    if (branch_taken)
-                        begin
-                        PC_n = imm_jump_add;
-                    end
-                end
-
-                default: begin end
-            endcase
         end
+        else if (branch_taken)
+        begin
+            PC_n = imm_jump_add;
+        end
+        else if (instruction_1_r ==? kJALR)
+        begin
+            if(rs_addr == rd_addr_2_r && op_writes_rf_2_r)
+            begin
+                PC_n = alu_result[0+:imem_addr_width_p];
+            end
+            else
+            begin
+                PC_n = rs_val[0+:imem_addr_width_p];
+            end
+        end
+        
     end
 
     // Selection between network and core for instruction address
@@ -179,14 +180,14 @@ module core #(
     // First pipecut: IF/ID
     always_ff @ (posedge clk)
     begin
-		if (!n_reset)
-			begin
-				instruction_1_r <= kNOP;
-				PC_1_r			<= 0;
-			end
+        if (!n_reset)
+            begin
+                instruction_1_r <= kNOP;
+                PC_1_r          <= 0;
+            end
         else if (!stall)
         begin
-            if (branch_taken || (instruction_1_r ==? kJALR) || (instruction_1_r ==? kWAIT) || (instruction_2_r ==? kJALR) || (instruction_2_r ==? kWAIT) || (instruction_3_r ==? kWAIT))
+            if (branch_taken || (instruction_1_r ==? kJALR) || (instruction_1_r ==? kWAIT) || (instruction_2_r ==? kWAIT) || (instruction_3_r ==? kWAIT))
             begin
                 instruction_1_r <= kNOP;
             end
@@ -197,7 +198,6 @@ module core #(
             end
         end
     end
-
     // Decode module
     cl_decode decode (
         .instruction_i(instruction_1_r),
@@ -212,24 +212,18 @@ module core #(
     // Address for Reg. File is shorter than address of Ins. memory in network data
     // Since network can write into immediate registers, the address is wider
     // but for the destination register in an instruction the extra bits must be zero
-    assign rd_addr = instruction_1_r.rd; /*(net_reg_write_cmd)
-                    ? (net_packet_i.net_addr [0+:($bits(instruction_1_r.rs_imm))])
-                    :
-						   ({{($bits(instruction_1_r.rs_imm)-$bits(instruction_1_r.rd)){1'b0}}
-                        ,{instruction_1_r.rd}});  */
+    assign rd_addr = instruction_1_r.rd;
     assign rs_addr = instruction_1_r.rs_imm;
 
 
-    logic [($bits(instruction_1_r.rs_imm))-1:0] rs_addr_2_r, rd_addr_2_r;
-	logic [($bits(instruction_1_r.rs_imm))-1:0] w_addr;
+    
+    logic [($bits(instruction_1_r.rs_imm))-1:0] w_addr;
     logic [($bits(rs_addr_2_r))-1:0] wd_addr_3_r;
 
     logic [31:0] wd_val_3_r;
-    logic [31:0] alu_mem_result;
 
-    assign w_addr = (net_reg_write_cmd)
-                    ? (net_packet_i.net_addr [0+:($bits(rs_addr))]) :
-						  wd_addr_3_r;
+    assign w_addr = (net_reg_write_cmd) ? net_packet_i.net_addr [0+:($bits(rs_addr))] :
+                                           wd_addr_3_r;
 
     // Register file
     reg_file #(
@@ -247,10 +241,6 @@ module core #(
         );
 
     //instruction_s instruction_2_r;  defined above
-    logic [imem_addr_width_p-1:0] pc_2_r, pc_3_r;
-    logic [31:0] rs_val_2_r, rd_val_2_r;
-    logic is_load_op_2_r, op_writes_rf_2_r, is_store_op_2_r, is_mem_op_2_r, is_byte_op_2_r;
-    logic op_writes_rf_3_r;
 
     assign rs_val_or_zero = rs_addr ? rs_val : 32'b0;
     assign rd_val_or_zero = rd_addr ? rd_val : 32'b0;
@@ -258,10 +248,10 @@ module core #(
     // Second pipecut: ID/EX
     always_ff @ (posedge clk)
     begin
-		if (!n_reset)
-		begin
-			instruction_2_r  <= kNOP;
-			pc_2_r 			 <= 0;
+        if (!n_reset)
+        begin
+            instruction_2_r  <= kNOP;
+            PC_2_r           <= 0;
 
             rs_addr_2_r <= 0;
             rs_val_2_r  <= 0;
@@ -275,43 +265,43 @@ module core #(
             is_byte_op_2_r    <= 0;
             op_writes_rf_2_r <= 0;
             is_store_op_2_r  <= 0;
-		end
-		else if (!stall)
-		begin
+        end
+        else if (!stall)
+        begin
             if (branch_taken)
             begin
                 instruction_2_r <= kNOP;
 
-					 
+                     
                 op_writes_rf_2_r <= 0;
                 is_store_op_2_r  <= 0;
 
-				rs_val_2_r  <= 0;
-				rd_val_2_r  <= 0;
+                rs_val_2_r  <= 0;
+                rd_val_2_r  <= 0;
             end
             else
             begin
                 instruction_2_r <= instruction_1_r;
-                pc_2_r <= PC_1_r;
+                PC_2_r <= PC_1_r;
 
                 op_writes_rf_2_r <= op_writes_rf_c;
                 is_store_op_2_r  <= is_store_op_c;
 
-				if(rs_addr == rd_addr_2_r && op_writes_rf_2_r)
-				begin
-					rs_val_2_r <= alu_mem_result;
-				end
-				else if (rs_addr == wd_addr_3_r && op_writes_rf_3_r)
+                if(rs_addr == rd_addr_2_r && op_writes_rf_2_r)
+                begin
+                    rs_val_2_r <= alu_mem_result;
+                end
+                else if (rs_addr == wd_addr_3_r && op_writes_rf_3_r)
                 begin
                     rs_val_2_r <= wd_val_3_r;
                 end
                 else
-				begin
-					rs_val_2_r <= rs_val_or_zero;
-				end
+                begin
+                    rs_val_2_r <= rs_val_or_zero;
+                end
 
 
-				if(rd_addr == rd_addr_2_r && op_writes_rf_2_r)
+                if(rd_addr == rd_addr_2_r && op_writes_rf_2_r)
                 begin
                     rd_val_2_r <= alu_mem_result;
                 end
@@ -319,10 +309,10 @@ module core #(
                 begin
                     rd_val_2_r <= wd_val_3_r;
                 end
-				else
-				begin
-					rd_val_2_r <= rd_val_or_zero;
-				end
+                else
+                begin
+                    rd_val_2_r <= rd_val_or_zero;
+                end
 
             end
             //addresses and data
@@ -364,7 +354,7 @@ module core #(
     begin
         if (!n_reset)
         begin
-            pc_3_r           <= 0;
+            PC_3_r           <= 0;
             wd_addr_3_r      <= 0;
             wd_val_3_r       <= 0;
             op_writes_rf_3_r <= 0;
@@ -374,13 +364,15 @@ module core #(
         begin
             instruction_3_r  <= instruction_2_r;
             wd_addr_3_r      <= rd_addr_2_r;
-            wd_val_3_r   <= alu_mem_result;
+            wd_val_3_r       <= alu_mem_result;
             op_writes_rf_3_r <= op_writes_rf_2_r;
-            pc_3_r <= pc_2_r;
+            PC_3_r           <= PC_2_r;
         end
     end
 
-    assign alu_mem_result = is_load_op_2_r ? from_mem_i.read_data : alu_result;
+    assign alu_mem_result = (instruction_2_r ==? kJALR) ? PC_2_r + 1'b1 : 
+                            is_load_op_2_r              ? from_mem_i.read_data : 
+                                                          alu_result;
 
     //if is store, we the address comes from rd
 
@@ -433,10 +425,10 @@ module core #(
                 rf_wd = net_packet_i.net_data;
             end
         // On a JALR, we want to write the return address to the destination register.
-        else if (instruction_3_r ==? kJALR) // TODO: this is written poorly.
-            begin
-                rf_wd = pc_3_r + 1'b1;
-            end
+        //else if (instruction_2_r ==? kJALR) // TODO: this is written poorly.
+        //    begin
+        //        rf_wd = PC_2_r + 1'b1;
+        //    end
         // On a load, we want to write the data from data memory to the destination register.
         else
             begin
@@ -500,11 +492,11 @@ module core #(
         begin
         // Change PC packet
         if (net_bar_write_cmd && (state_r != ERR))
-            begin
+        begin
             barrier_mask_n = net_packet_i.net_data [0+:mask_length_gp];
-            end
+        end
         else
-            begin
+        begin
             barrier_mask_n = barrier_mask_r;
         end
     end
@@ -536,5 +528,12 @@ module core #(
             exception_n = exception_o;
         end
     end
-
+    /*op_mne instruction_1_r_p, instruction_2_r_p, instruction_3_r_p, imem_out_p;
+    always_comb
+    begin
+        imem_out_p        = op_mne'(imem_out.opcode);
+        instruction_1_r_p = op_mne'(instruction_1_r.opcode);
+        instruction_2_r_p = op_mne'(instruction_2_r.opcode);
+        instruction_3_r_p = op_mne'(instruction_3_r.opcode);
+    end*/
 endmodule

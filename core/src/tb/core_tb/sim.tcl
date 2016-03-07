@@ -29,19 +29,25 @@ add wave    -noupdate   -group {dmem}               -radix hexadecimal  /core_tb
 add wave    -noupdate   -group {dmem}               -radix symbolic     /core_tb/dut/core1/mem_stage_n
 add wave    -noupdate   -group {dmem}               -radix symbolic     /core_tb/dut/core1/mem_stage_r
 
-add wave 	-noupdate	-group {important}			-radix hexadecimal  /core_tb/dut/core1/clk
-add wave    -noupdate   -group {important}          -radix symbolic     /core_tb/dut/core1/alu_1/op_mnemonic
-add wave    -noupdate   -group {important}          -radix decimal      /core_tb/dut/core1/PC_n
-add wave    -noupdate   -group {important}          -radix decimal      /core_tb/dut/core1/PC_r
-add wave    -noupdate   -group {important}          -radix hexadecimal  /core_tb/dut/core1/instruction_1_r
-add wave    -noupdate   -group {important}          -radix hexadecimal  /core_tb/dut/core1/instruction_2_r
-add wave    -noupdate   -group {important}          -radix hexadecimal  /core_tb/dut/core1/rd_addr_2_r
-add wave    -noupdate   -group {important}          -radix hexadecimal  /core_tb/dut/core1/rs_addr_2_r
-add wave    -noupdate   -group {important}          -radix decimal      /core_tb/dut/core1/rd_val_2_r
-add wave    -noupdate   -group {important}          -radix decimal      /core_tb/dut/core1/rs_val_2_r
-add wave    -noupdate   -group {important}          -radix hexadecimal  /core_tb/dut/core1/instruction_3_r
-add wave    -noupdate   -group {important}          -radix hexadecimal  /core_tb/dut/core1/wd_addr_3_r
-add wave    -noupdate   -group {important}          -radix decimal      /core_tb/dut/core1/wd_val_3_r
+
+add wave 	-noupdate	-group {important}	       -radix hexadecimal  /core_tb/dut/core1/clk
+add wave    -noupdate   -group {important}         -radix symbolic     /core_tb/dut/core1/imem_out_p
+add wave    -noupdate   -group {important}         -radix decimal      /core_tb/dut/core1/PC_n
+add wave    -noupdate   -group {important}         -radix decimal      /core_tb/dut/core1/PC_r
+
+add wave    -noupdate   -group {pipe1}             -radix symbolic     /core_tb/dut/core1/instruction_1_r_p
+add wave    -noupdate   -group {pipe1}             -radix decimal      /core_tb/dut/core1/PC_1_r
+
+add wave    -noupdate   -group {pipe2}             -radix symbolic     /core_tb/dut/core1/instruction_2_r_p
+add wave    -noupdate   -group {pipe2}             -radix decimal      /core_tb/dut/core1/PC_2_r
+add wave    -noupdate   -group {pipe2}             -radix hexadecimal  /core_tb/dut/core1/rs_addr_2_r
+add wave    -noupdate   -group {pipe2}             -radix hexadecimal  /core_tb/dut/core1/rd_addr_2_r
+add wave    -noupdate   -group {pipe2}             -radix decimal      /core_tb/dut/core1/rs_val_2_r
+add wave    -noupdate   -group {pipe2}             -radix decimal      /core_tb/dut/core1/rd_val_2_r
+
+add wave    -noupdate   -group {pipe3}             -radix symbolic     /core_tb/dut/core1/instruction_3_r_p
+add wave    -noupdate   -group {pipe3}             -radix hexadecimal  /core_tb/dut/core1/wd_addr_3_r
+add wave    -noupdate   -group {pipe3}             -radix decimal      /core_tb/dut/core1/wd_val_3_r
 
 #add wave    -noupdate   -group {cl_state_machine}   -radix hexadecimal  /core_tb/dut/core1/state_machine/*
 

@@ -115,7 +115,7 @@ module core #(
     logic [($bits(instruction_1_r.rs_imm))-1:0] rs_addr_2_r, rd_addr_2_r;
     logic [31:0] rs_val_2_r, rd_val_2_r;
 
-    logic [imem_addr_width_p-1:0] PC_2_r, PC_3_r;
+    logic [imem_addr_width_p-1:0] PC_2_r;
     logic is_load_op_2_r, op_writes_rf_2_r, is_store_op_2_r, is_mem_op_2_r, is_byte_op_2_r;
     logic op_writes_rf_3_r;
 
@@ -354,7 +354,6 @@ module core #(
     begin
         if (!n_reset)
         begin
-            PC_3_r           <= 0;
             wd_addr_3_r      <= 0;
             wd_val_3_r       <= 0;
             op_writes_rf_3_r <= 0;
@@ -366,7 +365,6 @@ module core #(
             wd_addr_3_r      <= rd_addr_2_r;
             wd_val_3_r       <= alu_mem_result;
             op_writes_rf_3_r <= op_writes_rf_2_r;
-            PC_3_r           <= PC_2_r;
         end
     end
 
@@ -528,12 +526,12 @@ module core #(
             exception_n = exception_o;
         end
     end
-    /*op_mne instruction_1_r_p, instruction_2_r_p, instruction_3_r_p, imem_out_p;
+    op_mne instruction_1_r_p, instruction_2_r_p, instruction_3_r_p, imem_out_p;
     always_comb
     begin
         imem_out_p        = op_mne'(imem_out.opcode);
         instruction_1_r_p = op_mne'(instruction_1_r.opcode);
         instruction_2_r_p = op_mne'(instruction_2_r.opcode);
         instruction_3_r_p = op_mne'(instruction_3_r.opcode);
-    end*/
+    end
 endmodule

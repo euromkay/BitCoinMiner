@@ -57,6 +57,7 @@ K:
 .const %S22, 22
 .const %S25, 25
 .const %S32, 32
+.const %S64, 64
 .const %S256, 256
 .const %WLOOP, WLOOP
 .const %WORK2, WORK2
@@ -66,11 +67,8 @@ K:
 .const %H_BASE, H
 .const %IV_BASE, IV
 .const %K_BASE, K
-.const %BIGSIG0, BIGSIG0
-.const %BIGSIG1, BIGSIG1
-.const %MAJ, MAJ
-.const %CH, CH
 .const %SHAROUND, SHAROUND
+.const %SHAROUNDOPT, SHAROUND_OPTIMIZED
 .const %CODE_TEST,  0xC0DEC0DE
 .const %DONE,  0x600DBEEF
 .const %FAIL, 0xDEADDEAD
@@ -160,8 +158,7 @@ W_LOOP0:
     ADDU $R16, %FOUR
     ADDU $R17, %FOUR
     ADDU $R29, %FOUR
-    MOV  $R14, %S32
-    ADDU $R14, %S32
+    MOV  $R14, %S64 //POTENTIAL S32 REWRITE
     SUBU $R14, $R29
     BNEQZ $R14, W_LOOP0
     JALR $R13, %WLOOP
@@ -255,8 +252,7 @@ W_INIT2_2:
     ADDU $R16, %FOUR
     ADDU $R17, %FOUR
     MOV  $R14, $R29
-    SUBU $R14, %S32
-    SUBU $R14, %S32
+    SUBU $R14, %S64
     BNEQZ $R14, W_INIT2_2
     JALR $R13, %WLOOP
 
@@ -408,14 +404,34 @@ WLOOP_done:
 // PRECONDITION: $R29 must be initialized to zero
 SHAROUND:
     // Compute T1
+SHAROUND_OPTIMIZED:
+
+
     MOV  $R19, $R28
     MOV  $R1, $R25
-    JALR $R30, %BIGSIG1
-    ADDU $R19, $R2  // Add BigSig1(e)
-    MOV  $R1, $R25
+
+    //bigsig1
+    MOV  $R2, $R25
+    ROR  $R2, %S6  //r2 has first term
+    
+    MOV  $R4, $R25  //x into r4
+    ROR  $R4, %S11  //r4 has the second term
+    XOR  $R2, $R4  //R2 has xor of s2 and s13
+    ROR  $R1, %S25
+    XOR  $R2, $R1
+    //end bigsig1
+
+    ADDU $R19, $R2  //last time 4
     MOV  $R2, $R26
-    MOV  $R3, $R27
-    JALR $R30, %CH
+
+    //ch start
+    MOV  $R4, $R25  //now both r4 and r1 have x
+    NOR  $R4, $R25  // ~X
+    AND  $R2, $R25  // X and Y
+    AND  $R4, $R27  // ~X and Z
+    XOR  $R4, $R2 
+    //ch end
+
     ADDU $R19, $R4  // Add Ch(e,f,g)
     MOV  $R1, $R29
     ADDU $R1, %K_BASE // Compute offset from K
@@ -428,12 +444,30 @@ SHAROUND:
 
     // Compute T2
     MOV  $R1, $R21
-    JALR $R30, %BIGSIG0
-    MOV  $R20, $R2 
+    
+    //bigsig0
+    MOV  $R2, $R21
+    ROR  $R2, %S2  //r2 has first term
+    MOV  $R4, $R21  //x into r4
+    ROR  $R4, %S13  //r4 has the second term
+    XOR  $R2, $R4  //R2 has xor of s2 and s13
+    ROR  $R1, %S22
+    XOR  $R2, $R1
+    //end bigsig0
+
+
+    MOV  $R20, $R2  //bigsig0(e)
     MOV  $R1, $R21
-    MOV  $R2, $R22
-    MOV  $R3, $R23
-    JALR $R30, %MAJ
+    MOV  $R2, $R22  
+    //start of maj
+    MOV  $R4, $R1
+    AND  $R4, $R2  // XY
+    AND  $R1, $R23 // XZ
+    AND  $R2, $R23 // YZ
+    XOR  $R4, $R2
+    XOR  $R4, $R1
+    //end of maj
+    
     ADDU $R20, $R4
 
     // Update 'a' to 'h'
@@ -452,7 +486,7 @@ SHAROUND:
     MOV  $R14, %S256
     SUBU $R14, $R29
     BEQZ $R14, SHAROUND_done 
-    JALR  $R31, %SHAROUND
+    JALR  $R31, %SHAROUNDOPT
 SHAROUND_done:
     JALR  $R31, $R17
 
@@ -467,59 +501,13 @@ SHAROUND_done:
 // $R2 : Y value
 // $R3 : Z value
 // $R4 : return value
-CH:
-    MOV  $R4, $R1   //now both r4 and r1 have x
-    NOR  $R4, $R4  // ~X
-    AND  $R1, $R2  // X and Y
-    AND  $R4, $R3  // ~X and Z
-    XOR $R4, $R1 
-    JALR $R31, $R30
+
 
 // MAJ function from SHA-256
 // $R1 : X value
 // $R2 : Y value
 // $R3 : Z value
 // $R4 : return value
-MAJ:
-   MOV  $R4, $R1
-   AND  $R4, $R2 // XY
-   AND  $R2, $R3 // YZ
-   AND  $R1, $R3 // XZ
-   XOR  $R4, $R2
-   XOR  $R4, $R1
-   JALR $R31, $R30
 
-// Big sigma 0 function from SHA-256 
-// $R1 : X value
-// $R2 : return value
-BIGSIG0:
-    MOV  $R2, $R1
-    MOV  $R3, %S2
-    ROR  $R2, $R3  //r2 has first term
-    MOV  $R3, %S13 //13 into r3
-    MOV  $R4, $R1  //x into r4
-    ROR  $R4, $R3  //r4 has the second term
-    XOR  $R2, $R4  //R2 has xor of s2 and s13
-    MOV  $R3, %S22
-    ROR  $R1, $R3
-    XOR  $R2, $R1
-    JALR $R31, $R30
 
     
-// Big sigma 1 function from SHA-256 
-// $R1 : X value
-// $R2 : return value
-BIGSIG1:
-    MOV  $R2, $R1
-    MOV  $R3, %S6
-    ROR  $R2, $R3  //r2 has first term
-    MOV  $R3, %S11 //13 into r3
-    MOV  $R4, $R1  //x into r4
-    ROR  $R4, $R3  //r4 has the second term
-    XOR  $R2, $R4  //R2 has xor of s2 and s13
-    MOV  $R3, %S25
-    ROR  $R1, $R3
-    XOR  $R2, $R1
-    JALR $R31, $R30
-
-// EOF

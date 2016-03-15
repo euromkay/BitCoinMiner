@@ -22,7 +22,6 @@ add wave    -noupdate   -group {alu}                -radix hexadecimal  /miner_t
 add wave    -noupdate   -group {alu}                -radix hexadecimal  /miner_tb/dut/core1/alu_1/rs_i
 add wave    -noupdate   -group {alu}                -radix hexadecimal  /miner_tb/dut/core1/alu_1/op_i
 add wave    -noupdate   -group {alu}                -radix hexadecimal  /miner_tb/dut/core1/alu_1/result_o
-add wave    -noupdate   -group {alu}                -radix hexadecimal  /miner_tb/dut/core1/alu_1/branch_taken_o
 
 add wave    -noupdate   -group {dmem}               -radix hexadecimal  /miner_tb/dut/core1/to_mem_o
 add wave    -noupdate   -group {dmem}               -radix hexadecimal  /miner_tb/dut/core1/from_mem_i
@@ -31,21 +30,21 @@ add wave    -noupdate   -group {dmem}               -radix symbolic     /miner_t
 
 
 add wave 	-noupdate	-group {important}	       -radix hexadecimal  /miner_tb/dut/core1/clk
-add wave    -noupdate   -group {important}         -radix symbolic     /miner_tb/dut/core1/imem_out_p
+#add wave    -noupdate   -group {important}         -radix symbolic     /miner_tb/dut/core1/imem_out_p
 add wave    -noupdate   -group {important}         -radix decimal      /miner_tb/dut/core1/PC_n
 add wave    -noupdate   -group {important}         -radix decimal      /miner_tb/dut/core1/PC_r
 
-add wave    -noupdate   -group {pipe1}             -radix symbolic     /miner_tb/dut/core1/instruction_1_r_p
+#add wave    -noupdate   -group {pipe1}             -radix symbolic     /miner_tb/dut/core1/instruction_1_r_p
 add wave    -noupdate   -group {pipe1}             -radix decimal      /miner_tb/dut/core1/PC_1_r
 
-add wave    -noupdate   -group {pipe2}             -radix symbolic     /miner_tb/dut/core1/instruction_2_r_p
+#add wave    -noupdate   -group {pipe2}             -radix symbolic     /miner_tb/dut/core1/instruction_2_r_p
 add wave    -noupdate   -group {pipe2}             -radix decimal      /miner_tb/dut/core1/PC_2_r
 add wave    -noupdate   -group {pipe2}             -radix hexadecimal  /miner_tb/dut/core1/rs_addr_2_r
 add wave    -noupdate   -group {pipe2}             -radix hexadecimal  /miner_tb/dut/core1/rd_addr_2_r
 add wave    -noupdate   -group {pipe2}             -radix decimal      /miner_tb/dut/core1/rs_val_2_r
 add wave    -noupdate   -group {pipe2}             -radix decimal      /miner_tb/dut/core1/rd_val_2_r
 
-add wave    -noupdate   -group {pipe3}             -radix symbolic     /miner_tb/dut/core1/instruction_3_r_p
+#add wave    -noupdate   -group {pipe3}             -radix symbolic     /miner_tb/dut/core1/instruction_3_r_p
 add wave    -noupdate   -group {pipe3}             -radix hexadecimal  /miner_tb/dut/core1/wd_addr_3_r
 add wave    -noupdate   -group {pipe3}             -radix decimal      /miner_tb/dut/core1/wd_val_3_r
 

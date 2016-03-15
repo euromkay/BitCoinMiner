@@ -10,3 +10,12 @@ core/src/tb/core_tb/tester_info.txt
 core/src/tb/core_tb/work/_info
 *.wlf
 core/src/tb/miner_tb/work/_info
+*.tdf
+*.cdb
+*.qpf
+core/src/db/core_flattened.(0).cnf.hdb
+*.hdb
+*.rdb
+core/src/db/core_flattened.db_info
+*.qtl
+core/src/tb/core_tb/work/_vmake

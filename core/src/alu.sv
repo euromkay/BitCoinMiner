@@ -20,13 +20,13 @@ module alu (
             kADDU:  result_o   = rd_i +  rs_i;
             kSUBU:  result_o   = rd_i -  rs_i;
             kSLLV:  result_o   = rd_i << rs_i[4:0];
-            kSRAV:  result_o   = $signed (rd_i)   >>> rs_i[4:0];
-            kSRLV:  result_o   = $unsigned (rd_i) >>  rs_i[4:0];
-            kROL:   result_o   = (rd_i << rs_i[4:0]) | (rd_i >> (~rs_i[4:0] + 5'd1));
+            //kSRAV:  result_o   = $signed (rd_i)   >>> rs_i[4:0];//not used
+            //kSRLV:  result_o   = $unsigned (rd_i) >>  rs_i[4:0];//not used
+            //kROL:   result_o   = (rd_i << rs_i[4:0]) | (rd_i >> (~rs_i[4:0] + 5'd1)); //unused one
             kROR:   result_o   = (rd_i >> rs_i[4:0]) | (rd_i << ((~rs_i[4:0]) + 5'd1));
             kXOR:   result_o   = rd_i ^ rs_i;
             kAND:   result_o   = rd_i & rs_i;
-            kOR:    result_o   = rd_i | rs_i;
+            //kOR:    result_o   = 32'd0;//rd_i | rs_i;
             kNOR:   result_o   = ~ (rd_i|rs_i);
 
             //s7(x) + s18(x) + r3(x)
@@ -41,18 +41,16 @@ module alu (
             kSLTU:  result_o   = ($unsigned(rd_i)<$unsigned(rs_i)) ? 32'd1 : 32'd0;
             kBEQZ:  branch_taken_o = (rd_i==32'd0)                     ? 1'b1  : 1'b0;
             kBNEQZ: branch_taken_o = (rd_i!=32'd0)                     ? 1'b1  : 1'b0;
-            kBGTZ:  branch_taken_o = ($signed(rd_i)>$signed(32'd0))    ? 1'b1  : 1'b0;
-            kBLTZ:  branch_taken_o = ($signed(rd_i)<$signed(32'd0))    ? 1'b1  : 1'b0;
+            //kBGTZ:  branch_taken_o = ($signed(rd_i)>$signed(32'd0))    ? 1'b1  : 1'b0;
+            //kBLTZ:  branch_taken_o = ($signed(rd_i)<$signed(32'd0))    ? 1'b1  : 1'b0;
 
-            kMOV, kLW, kLBU, kJALR, kBAR:
-                begin
+            kMOV, kJALR, kBAR, kLW, kLBU, kBGTZ, kBLTZ, kROL, kSRAV, kSRLV, kSW, kSB://, kOR:
+            begin
                 result_o   = rs_i;
             end
 
-            kSW, kSB:
-                begin
-                result_o   = rd_i;
-            end
+            kOR://, kROL:
+                result_o   = 32'd0;
 				
 
             default:

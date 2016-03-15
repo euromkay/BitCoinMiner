@@ -526,12 +526,12 @@ module core #(
             exception_n = exception_o;
         end
     end
-    op_mne instruction_1_r_p, instruction_2_r_p, instruction_3_r_p, imem_out_p;
+    /*op_mne instruction_1_r_p, instruction_2_r_p, instruction_3_r_p, imem_out_p;
     always_comb
     begin
         imem_out_p        = op_mne'(imem_out.opcode);
         instruction_1_r_p = op_mne'(instruction_1_r.opcode);
         instruction_2_r_p = op_mne'(instruction_2_r.opcode);
         instruction_3_r_p = op_mne'(instruction_3_r.opcode);
-    end
+    end*/
 endmodule
